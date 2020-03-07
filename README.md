@@ -1,2 +1,2 @@
-# lfg_downloader
-Program that downloads all the LFG webcomics
+# online_comic_downloader
+Scripts that download different webcomics/manga
