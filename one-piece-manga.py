@@ -7,7 +7,7 @@ import requests, os, bs4
 
 url = 'https://read-onepiece.com/manga/onepiece-chapter-973/'               # starting url
 os.makedirs('One Piece', exist_ok=True)    # store comics in ./lfg  no exception if folder already exists
-while url != 'https://read-onepiece.com/manga/onepiece-chapter-1/': #careful, layout & URL changes to one-piece-chapter-x
+while url != 'https://read-onepiece.com/manga/onepiece-chapter-2/': #careful, layout & URL changes to one-piece-chapter-x
     # Download the page.
     print('Downloading page %s...' % url)
     res = requests.get(url)
@@ -53,37 +53,38 @@ while url != 'https://read-onepiece.com/manga/onepiece-chapter-1/': #careful, la
 
 # up to 249 runs ok - could not find comic image
 
-# chapter 1 has another URL:
-url = 'https://onlineonepiece.com/manga/one-piece-chapter-1/'
-print('Downloading page %s...' % url)
-res = requests.get(url)
-res.raise_for_status()
+# chapter 2 is not translated and chapter 1 is not available - they have another URL:
+if url == 'https://read-onepiece.com/manga/onepiece-chapter-2/':
+    url = 'https://onlineonepiece.com/manga/one-piece-chapter-2/'
+    print('Downloading page %s...' % url)
+    res = requests.get(url)
+    res.raise_for_status()
 
-soup = bs4.BeautifulSoup(res.text, 'html.parser')
+    soup = bs4.BeautifulSoup(res.text, 'html.parser')
 
-# Find the URL of the comic image.
-comicElem = soup.select('.separator img') # <div id="comic-img"> <img src="xxx"> ---> Elem = soup.select('#id element')
-if comicElem == []: # if selector does not find any elements, it returns empty list 
-    print('Could not find comic image.')
-else:
-    for i in range(0, len(comicElem)):
-        comicUrl = comicElem[i].get('src')
-        # Download the image.
-        print('Downloading image %s...' % (comicUrl))
-        res = requests.get(comicUrl)
-        res.raise_for_status()  
+    # Find the URL of the comic image.
+    comicElem = soup.select('.separator img') # <div id="comic-img"> <img src="xxx"> ---> Elem = soup.select('#id element')
+    if comicElem == []: # if selector does not find any elements, it returns empty list 
+        print('Could not find comic image.')
+    else:
+        for i in range(0, len(comicElem)):
+            comicUrl = comicElem[i].get('src')
+            # Download the image.
+            print('Downloading image %s...' % (comicUrl))
+            res = requests.get(comicUrl)
+            res.raise_for_status()  
 
-        # Save the image to ./One Piece.
-        fileName = url[-4:-1] + '_' + str(i+1)
-        print(fileName)
-        imageFile = open('.\\One Piece\\%s.jpg' % fileName,
-'wb')
-        for chunk in res.iter_content(100000):
-            imageFile.write(chunk)
-        imageFile.close()
+            # Save the image to ./One Piece.
+            fileName = url[-4:-1] + '_' + str(i+1)
+            print(fileName)
+            imageFile = open('.\\One Piece\\%s.jpg' % fileName,
+    'wb')
+            for chunk in res.iter_content(100000):
+                imageFile.write(chunk)
+            imageFile.close()
 
-    # Get the Prev button's url.
-    prevLink = soup.select('a[rel="prev"]')[0] # selector 'a[rel="prev"]' identifies the <a> element with the rel attribute set to prev
-    url = prevLink.get('href')
-    
-    print('Done.')
+        # Get the Prev button's url.
+        prevLink = soup.select('a[rel="prev"]')[0] # selector 'a[rel="prev"]' identifies the <a> element with the rel attribute set to prev
+        url = prevLink.get('href')
+
+        print('Done.')
