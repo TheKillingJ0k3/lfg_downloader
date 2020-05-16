@@ -10,20 +10,20 @@
 import requests, os, bs4
 
 # url = 'https://www.gocomics.com/peanuts/1950/10/02'               # starting url
-url = 'https://www.gocomics.com/peanuts/1984/01/01'               # starting url
+# url = 'https://www.gocomics.com/peanuts/1984/01/01'               # starting url
 
 
 os.makedirs('Peanuts', exist_ok=True)    # store comics in ./Peanuts  no exception if folder already exists
 
 #TODO: user picks a year - script downloads this year only
+print('Pick a year:')
+year = input()
+url = 'https://www.gocomics.com/peanuts/{}/01/01' .format(year) # starting url
 
 
-lastYear = ''
-while not url.endswith('latest'): # no end condition on last comic - I can use today's date
-    year = str(url[-10:-6])
-    if year != lastYear: # when year inside url changes, create new folder for this year
-        lastYear = year
-        os.makedirs(os.path.join('Peanuts', year), exist_ok=True)
+URLyear = str(url[-10:-6])
+while year in URLyear: # loop condition: year that user picked should be in URL
+    os.makedirs(os.path.join('Peanuts', year), exist_ok=True)
 
     # Download the page.
     print('Downloading page %s...' % url)
@@ -59,6 +59,8 @@ while not url.endswith('latest'): # no end condition on last comic - I can use t
     # Get the Prev button's url.
     prevLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0]
     url = 'https://www.gocomics.com/' + prevLink.get('href')
+
+    URLyear = str(url[-10:-6])
 
 print('Done.')
 
