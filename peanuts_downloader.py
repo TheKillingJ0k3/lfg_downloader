@@ -10,16 +10,18 @@
 import requests, os, bs4
 
 # url = 'https://www.gocomics.com/peanuts/1950/10/02'               # starting url
-# url = 'https://www.gocomics.com/peanuts/1967/04/17'               # starting url
-url = 'https://www.gocomics.com/peanuts/1979/01/12'               # starting url
+url = 'https://www.gocomics.com/peanuts/1984/01/01'               # starting url
 
 
 os.makedirs('Peanuts', exist_ok=True)    # store comics in ./Peanuts  no exception if folder already exists
 
+#TODO: user picks a year - script downloads this year only
+
+
 lastYear = ''
 while not url.endswith('latest'): # no end condition on last comic - I can use today's date
     year = str(url[-10:-6])
-    if year != lastYear:
+    if year != lastYear: # when year inside url changes, create new folder for this year
         lastYear = year
         os.makedirs(os.path.join('Peanuts', year), exist_ok=True)
 
@@ -27,7 +29,6 @@ while not url.endswith('latest'): # no end condition on last comic - I can use t
     print('Downloading page %s...' % url)
     res = requests.get(url)
     res.raise_for_status()
-
 # 1967.04.17 requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://assets.amuniversal.com/b7ac0120f892013014ff001dd8b71c47
 
     soup = bs4.BeautifulSoup(res.text, 'html.parser')
@@ -36,7 +37,7 @@ while not url.endswith('latest'): # no end condition on last comic - I can use t
     date = str(url[-10:])
     filename = date.replace('/', '.')
     print(filename)
-    comicElem = soup.select('.item-comic-image img') # src="https://assets.amuniversal.com/3acf4280f867013014ce001dd8b71c47" ---> Elem = soup.select('#id element')
+    comicElem = soup.select('.item-comic-image img') # src="https://assets.amuniversal.com/3acf4280f867013014ce001dd8b71c47"
     if comicElem == []: # if selector does not find any elements, it returns empty list 
         print('Could not find comic image.')
     else:
@@ -46,9 +47,9 @@ while not url.endswith('latest'): # no end condition on last comic - I can use t
         res = requests.get(comicUrl)
         res.raise_for_status()  
 
-        # Save the image to ./Peanuts.
+        # Save the image to ./Peanuts/Year.
         imageFile = open(os.path.join('Peanuts', year, os.path.basename(filename + '.jpg')), # comicUrl does not end with .jpg, so we add it manually
-'wb') # call os.path.basename() with comicUrl, and it will return just the last part of the URL, 'heartbleed_explanation.png' /// join for Windows & Linux
+'wb') # call os.path.basename() with comicUrl, and it will return just the last part of the URL /// join for Windows & Linux
 
 
         for chunk in res.iter_content(100000):
@@ -56,7 +57,9 @@ while not url.endswith('latest'): # no end condition on last comic - I can use t
         imageFile.close()
 
     # Get the Prev button's url.
-    prevLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # selector 'a[rel="prev"]' identifies the <a> element with the rel attribute set to prev
+    prevLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0]
     url = 'https://www.gocomics.com/' + prevLink.get('href')
 
 print('Done.')
+
+#TODO: add feature to copy new file to OneDrive
