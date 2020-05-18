@@ -7,7 +7,8 @@
 # https://www.gocomics.com/calvinandhobbes/2020/05/10
 # https://www.gocomics.com/peanuts/2020/05/10
 
-import requests, os, bs4
+import requests, bs4
+import shutil, os, subprocess
 
 # url = 'https://www.gocomics.com/peanuts/1950/10/02'               # starting url
 # url = 'https://www.gocomics.com/peanuts/1984/01/01'               # starting url
@@ -65,10 +66,10 @@ while year in str(url[-10:-6]): # loop condition: year that user picked should b
 
 print('Done.')
 
-#TODO: add feature to copy new file to OneDrive
 OneDriveUpload = input('Do you want to upload your newly created folder to Onedrive? \nPress: Y for Yes, N for No: ')
 if OneDriveUpload == 'Y':
-    x=0
+    shutil.copytree(os.path.join('Peanuts', year), os.path.join('OneDrive', 'Comics', 'Peanuts', year))
+    subprocess.Popen(os.path.join('AppData', 'Local', 'Microsoft', 'OneDrive', 'OneDrive.exe'))
 elif OneDriveUpload == 'N':
     pass
 else:
