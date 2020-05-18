@@ -15,14 +15,15 @@ import requests, os, bs4
 
 os.makedirs('Peanuts', exist_ok=True)    # store comics in ./Peanuts  no exception if folder already exists
 
-#TODO: user picks a year - script downloads this year only
-print('Pick a year:')
-year = input()
-url = 'https://www.gocomics.com/peanuts/{}/01/01' .format(year) # starting url
+year = input('Pick a year between 1950 and current year:') # year 1950 starts from 02/10
+if year == '1950':
+    url = 'https://www.gocomics.com/peanuts/1950/10/02' # starting url for 1950
+else:
+    url = 'https://www.gocomics.com/peanuts/{}/01/01' .format(year) # starting url
 
 
-URLyear = str(url[-10:-6])
-while year in URLyear: # loop condition: year that user picked should be in URL
+# URLyear = str(url[-10:-6])
+while year in str(url[-10:-6]): # loop condition: year that user picked should be in URL
     os.makedirs(os.path.join('Peanuts', year), exist_ok=True)
 
     # Download the page.
@@ -60,8 +61,15 @@ while year in URLyear: # loop condition: year that user picked should be in URL
     prevLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0]
     url = 'https://www.gocomics.com/' + prevLink.get('href')
 
-    URLyear = str(url[-10:-6])
+    # URLyear = str(url[-10:-6])
 
 print('Done.')
 
 #TODO: add feature to copy new file to OneDrive
+OneDriveUpload = input('Do you want to upload your newly created folder to Onedrive? \nPress: Y for Yes, N for No: ')
+if OneDriveUpload == 'Y':
+    x=0
+elif OneDriveUpload == 'N':
+    pass
+else:
+    print('I SAID Press: Y for Yes, N for No')
