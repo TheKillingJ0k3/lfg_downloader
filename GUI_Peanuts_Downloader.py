@@ -14,7 +14,6 @@ from tkinter import messagebox
 # url = 'https://www.gocomics.com/peanuts/1984/01/01'               # starting url
 
 #GLOBAL VARIABLES
-year = ''
 url = ''
 # OneDriveUpload = ''
 
@@ -22,6 +21,17 @@ url = ''
 comic_title_var = ''
 year_var = ''
 OneDrive_var = ''
+comic_title_list = []
+
+comic_list_url = 'https://www.gocomics.com/comics/a-to-z'
+# Download the page.
+res = requests.get(comic_list_url)
+res.raise_for_status()
+soup = bs4.BeautifulSoup(res.text, 'html.parser')
+list_link = soup.select('div > h4') # works
+for i in list_link:
+    comic_title_list.append(i.text)
+
 
 year_list = []
 for i in range(1950,2021):
@@ -120,12 +130,10 @@ def OneDrive_upload():
     global OneDrive_var
     # OneDriveUpload = input('Do you want to upload your newly created folder to Onedrive? \nPress: Y for Yes, N for No: ')
     if OneDrive_var == 'Yes':
-        shutil.copytree(os.path.join('Peanuts', year), os.path.join('OneDrive', 'Comics', 'Peanuts', year))
+        shutil.copytree(os.path.join('Peanuts', year_var), os.path.join('OneDrive', 'Comics', 'Peanuts', year_var))
         subprocess.Popen(os.path.join('AppData', 'Local', 'Microsoft', 'OneDrive', 'OneDrive.exe'))
     elif OneDrive_var == 'No':
         pass
-    else:
-        print('I SAID Press: Y for Yes, N for No')
 #############################################################################################
 
 # os.makedirs('Peanuts', exist_ok=True)    # store comics in ./Peanuts  no exception if folder already exists
@@ -140,7 +148,7 @@ createFolder('Peanuts')
 
 root = Tk()
 root.title('Comic Downloader')
-root.geometry('500x200')
+root.geometry('500x230')
 # root.state('zoomed')
 # root.option_add('*tear0ff', False) #opens fullscreen
 
@@ -151,13 +159,13 @@ frame.pack()
 first_line = Label(frame, text='Comic Downloader', bg='gray')
 first_line.pack()
 #second line
-ComicTitle = Label(frame, text='Comic Title', bg='yellow')
-ComicYear = Label(frame, text='Year', bg='yellow')
-OneDriveUpload = Label(frame, text='Upload to OneDrive', bg='yellow')
+ComicTitle = Label(frame, text='Comic Title', bg='pink')
+ComicYear = Label(frame, text='Year', bg='pink')
+OneDriveUpload = Label(frame, text='Upload to OneDrive', bg='pink')
 #third line
 # comic_title_var = StringVar() # TypeError: 'StringVar' object is not callable
 comic_title_selector = ttk.Combobox(frame, width='30', textvariable=comic_title_var)
-comic_title_selector['values'] = ("The Adventures of Business Cat", "Andy Capp", "Calvin and Hobbes", "Catana Comics", "Fowl Language", "Garfield", "Peanuts")
+comic_title_selector['values'] = (comic_title_list) # "The Adventures of Business Cat", "Andy Capp", "Calvin and Hobbes", "Catana Comics", "Fowl Language", "Garfield", "Peanuts"
 # comic_title_selector.current("The Adventures of Business Cat")
 comic_title_selector.bind('<<ComboboxSelected>>', set_comic_title_var)
 
@@ -188,7 +196,6 @@ comic_title_selector.grid(column=1, row=3, columnspan=1, rowspan=1, sticky=(W))
 year_selector.grid(column=2, row=3, columnspan=1, rowspan=1, sticky=(W))
 OneDrive_Upload_Frame.grid(column=3, row=3, columnspan=1, rowspan=1, sticky=(W))
 submit.grid(column=4, row=3, columnspan=1, rowspan=1, sticky=(E))
-
 
 ######################################################################################
 
