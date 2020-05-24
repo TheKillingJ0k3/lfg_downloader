@@ -1,28 +1,32 @@
 #! python3
 
+#TODO: Stop downloading on today's date without giving error
+#TODO: most important problem is when downloading a middle year - not the first one / we always get error
+#TODO: check program exit conditions, if bar is sill running, program cannot die
+#TODO: onedrive uploader does not work if yes is preset
+#TODO: download whole comic option
+
+#TODO: Process 2 does not recognize path to create folder, probably because all vars/code so far was made by another core
+
 # Standard library imports
-import shutil, os, subprocess
+import shutil, os, threading, subprocess, time
 # Third party imports
 import requests, bs4
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter import simpledialog
 # Local app imports
-
-
-# url = 'https://www.gocomics.com/peanuts/1950/10/02'               # starting url
-# url = 'https://www.gocomics.com/peanuts/1984/01/01'               # starting url
 
 #GLOBAL VARIABLES
 url = ''
-# OneDriveUpload = ''
-
 comic_title_var = ''
 year_var = ''
 OneDrive_var = ''
 first_publication_url = ''
 
 comic_title_list = []
+
 
 comic_list_url = 'https://www.gocomics.com/comics/a-to-z'
 # Download the page.
@@ -65,13 +69,19 @@ def set_comic_title_var(event):
     # url -> res -> parser -> with select I save element in list / var
     global res # for 'https://www.gocomics.com/comics/a-to-z'
     global soup # for 'https://www.gocomics.com/comics/a-to-z'
+
+    # Download the page.  If I do not use this, res & soup get overwritten by chosen url
+    global comic_list_url
+    res = requests.get(comic_list_url)
+    res.raise_for_status()
+    soup = bs4.BeautifulSoup(res.text, 'html.parser')
+
     global comic_title_list
     print(comic_title_list.index(comic_title_var))
 
     # Get the comic current date url.
-    # chosen_comic_url = 'https://www.gocomics.com/{}/{}/01/01' .format(comic_title_var, year_var)
     comic_current_date_url = soup.select('a[class="gc-blended-link gc-blended-link--primary col-12 col-sm-6 col-lg-4"]')[comic_title_list.index(comic_title_var)] # index must be comic_title_list index
-    chosen_comic_url = 'https://www.gocomics.com/' + comic_current_date_url.get('href') # correct
+    chosen_comic_url = 'https://www.gocomics.com/' + comic_current_date_url.get('href') # list index out of range when choosing new title
     print(chosen_comic_url)
     # download current page of chosen comic
     res = requests.get(chosen_comic_url) # check if we have problems with global var
@@ -83,6 +93,16 @@ def set_comic_title_var(event):
     first_publication_url = 'https://www.gocomics.com/' + first_page_button.get('href')
     print(first_publication_url)
 
+    # update year_list
+    global year_list
+    print(first_publication_url[-10:-6])
+    year_list = []
+    for i in range(int(first_publication_url[-10:-6]),2021):
+        year_list.append(i)
+    print(year_list)
+    global year_selector
+    year_selector['values'] = (year_list)
+    print(year_selector['values'])
 
 def set_year_var(event):
     global comic_title_var
@@ -91,16 +111,14 @@ def set_year_var(event):
     year_var = year_selector.get()
     print (year_var)
     global first_publication_url
-    if year_var in str(first_publication_url[-10:-6]): # if year chosen by user is the first publication year
+    if str(year_var) in str(first_publication_url[-10:-6]): # if year chosen by user is the first publication year
         url = first_publication_url
-    elif int(year_var) < int(first_publication_url[-10:-6]):
-        print('Oops! Too early for {}' .format(comic_title_var))
+        print(url)
+    # elif int(year_var) < int(first_publication_url[-10:-6]):
+    #     print('Oops! Too early for {}' .format(comic_title_var))
     else:
         url = 'https://www.gocomics.com/{}/{}/01/01' .format(comic_title_var, year_var) # starting url
-    # if year_var == '1950':
-    #     url = 'https://www.gocomics.com/{}/1950/10/02' .format(comic_title_var) # starting url for 1950
-    # else:
-    #     url = 'https://www.gocomics.com/{}/{}/01/01' .format(comic_title_var, year_var) # starting url
+
 
 def Set_OneDrive_var():
     global OneDrive_var
@@ -113,13 +131,37 @@ def Set_OneDrive_var():
 
 ################################  MAIN FUNCTIONS  ###############################################
 
-def download_comic():
+# def progressbar_multiprocessing(): #opens 2 new main windows
+#     p1 = multiprocessing.Process(target=start_progress)
+#     p2 = multiprocessing.Process(target=download_comic)
+#     p1.start()
+#     p2.start()
+#     p1.join()
+#     p2.join()
+
+# threading acts as if using two cores but it does not - python processes a couple of lines of each function at intervals
+# multiprocessing uses 2 cores that do not share the same memory, so second process -download comic- does not work correctly
+
+def threading_dl_and_progress(): # does not enter while loop
+    threadObj1 = threading.Thread(target=download_comic) # does not enter while loop
+    threadObj1.start()
+    threadObj2 = threading.Thread(target=start_progress)
+    time.sleep(5)
+    threadObj2.start()
+
+
+def download_comic(): # the adventures of business cat 2018 does not download anything
     global url
     global comic_title_var
     global year_var
-    createFolder(comic_title_var)
+
+    # threadObj = threading.Thread(target=start_progress)
+    # threadObj.start()
+
+    createFolder(os.path.join('Downloaded Comics', comic_title_var)) # multiprocessing does not recognize this var / cannot find path specified
+
     while year_var in str(url[-10:-6]): # loop condition: year that user picked should be in URL
-        os.makedirs(os.path.join(comic_title_var, year_var), exist_ok=True) # createFolder
+        os.makedirs(os.path.join('Downloaded Comics', comic_title_var, year_var), exist_ok=True) # createFolder
 
         # Download the page.
         print('Downloading page %s...' % url)
@@ -143,14 +185,14 @@ def download_comic():
             res.raise_for_status()  
 
             # Save the image to ./Peanuts/Year.
-            imageFile = open(os.path.join(comic_title_var, year_var, os.path.basename(filename + '.jpg')), # comicUrl does not end with .jpg, so we add it manually
+            imageFile = open(os.path.join('Downloaded Comics', comic_title_var, year_var, os.path.basename(filename + '.jpg')), # comicUrl does not end with .jpg, so we add it manually
     'wb') # call os.path.basename() with comicUrl, and it will return just the last part of the URL /// join for Windows & Linux
             for chunk in res.iter_content(100000):
                 imageFile.write(chunk)
             imageFile.close()
 
         # Get the Next button's url.
-        nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0]
+        nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
         url = 'https://www.gocomics.com/' + nextLink.get('href')
 
     print('Done.')
@@ -163,23 +205,101 @@ def OneDrive_upload():
     global comic_title_var
     # OneDriveUpload = input('Do you want to upload your newly created folder to Onedrive? \nPress: Y for Yes, N for No: ')
     if OneDrive_var == 'Yes':
-        shutil.copytree(os.path.join(comic_title_var, year_var), os.path.join('OneDrive', 'Comics', comic_title_var, year_var))
+        shutil.copytree(os.path.join('Downloaded Comics', comic_title_var, year_var), os.path.join('OneDrive', 'Comics', comic_title_var, year_var))
         subprocess.Popen(os.path.join('AppData', 'Local', 'Microsoft', 'OneDrive', 'OneDrive.exe'))
     elif OneDrive_var == 'No':
         pass
 #############################################################################################
 
-# os.makedirs('Peanuts', exist_ok=True)    # store comics in ./Peanuts  no exception if folder already exists
 
+lst = []
+combination_number = 200
+for x in range(0, combination_number):
+    lst.append(str(x+1))
+    # print(self.lst)
 
-# OneDrive_upload()
+def start_progress():
+    # root = Tk()
+    s = ProgressWindow('Comic Downloader', lst)
+    root.wait_window(s)
 
+class ProgressWindow(simpledialog.Dialog):
+    def __init__(self, name, lst):
+        ''' Init progress window '''
+        Toplevel.__init__(self)
+        self.name = name
+        self.lst = lst
+        self.length = 400
+        #
+        self.create_window()
+        self.create_widgets()
 
-# year_var = StringVar()
+    def create_window(self):
+        ''' Create progress window '''
+        self.focus_set()  # set focus on the ProgressWindow
+        self.grab_set()  # make a modal window, so all events go to the ProgressWindow
+        self.transient()  # show only one window in the task bar
+        #
+        self.title(u'Downloading for {}'.format(self.name))
+        self.resizable(False, False)  # window is not resizable
+        # self.close gets fired when the window is destroyed
+        self.protocol(u'WM_DELETE_WINDOW', self.close)
+        # Set proper position over the parent window
+        # dx = (self.master.winfo_width() >> 1) - (self.length >> 1)
+        # dy = (self.master.winfo_height() >> 1) - 50
+        # self.geometry(u'+{x}+{y}'.format(x = self.master.winfo_rootx() + dx,
+        #                                  y = self.master.winfo_rooty() + dy))
+        self.geometry(u'+100+100')
+        self.bind(u'<Escape>', self.close)  # cancel progress when <Escape> key is pressed
+
+    def create_widgets(self):
+        ''' Widgets for progress window are created here '''
+        self.var1 = StringVar()
+        self.var2 = StringVar()
+        self.num = IntVar()
+        self.maximum = len(self.lst) #combination_number here
+        self.tmp_str = ' / ' + str(self.maximum)
+        #
+        # pady=(0,5) means margin 5 pixels to bottom and 0 to top
+        ttk.Label(self, textvariable=self.var1).pack(anchor='w', padx=2)
+        self.progress = ttk.Progressbar(self, maximum=self.maximum, orient='horizontal',
+                                        length=self.length, variable=self.num, mode='determinate')
+        self.progress.pack(padx=2, pady=2)
+        ttk.Label(self, textvariable=self.var2).pack(side='left', padx=2)
+        ttk.Button(self, text='Cancel', command=self.close).pack(anchor='e', padx=1, pady=(0, 1))
+        #
+        self.next()
+
+    def next(self):
+        ''' Take next file from the list and do something with it '''
+        n = self.num.get()
+        # self.do_something_with_file(n+1, self.lst[n])  # some useful operation
+        # self.var1.set('File name: ' + self.lst[n])  # 1st einai ta arxeia: thelei allagi
+        n += 1
+        self.var2.set(str(n) + self.tmp_str)
+        self.num.set(n)
+        if n < self.maximum:
+            self.after(500, self.next)  # call itself after some time
+        else:
+            self.close()  # close window
+
+    # def do_something_with_file(self, number, name): #edw vazw "test x generated"
+    #     print(number, name)
+
+    def close(self, event=None):
+        ''' Close progress window '''
+        if self.progress['value'] == self.maximum:
+            print('Ok: process finished successfully')
+        else:
+            print('Cancel: process is cancelled')
+        # self.master.focus_set()  # put focus back to the parent window
+        self.destroy()  # destroy progress window
+
 
 ###################### main GUI - Button creation #########################################
-
 root = Tk()
+# if __name__ == '__main__':
+    
 root.title('Comic Downloader')
 root.geometry('500x350')
 # root.state('zoomed')
@@ -203,8 +323,7 @@ OneDriveUpload = Label(frame, text='Upload to OneDrive', bg='pink')
 #third line
 # comic_title_var = StringVar() # TypeError: 'StringVar' object is not callable
 comic_title_selector = ttk.Combobox(frame, width='30', textvariable=comic_title_var)
-comic_title_selector['values'] = (comic_title_list) # "The Adventures of Business Cat", "Andy Capp", "Calvin and Hobbes", "Catana Comics", "Fowl Language", "Garfield", "Peanuts"
-# comic_title_selector.current("The Adventures of Business Cat")
+comic_title_selector['values'] = (comic_title_list)
 comic_title_selector.bind('<<ComboboxSelected>>', set_comic_title_var)
 
 year_selector = ttk.Combobox(frame, width='10')
@@ -212,10 +331,10 @@ year_selector['values'] = (year_list)
 # year.current(1950)
 year_selector.bind('<<ComboboxSelected>>', set_year_var)
 
-submit = Button(frame, text='Download', command=download_comic) 
+submit = Button(frame, text='Download', command=threading_dl_and_progress)
 
 OneDrive_Upload_Frame = Frame(frame)
-OneDrive_button_var = StringVar() #if booleanvar -> unchecked!!!!
+OneDrive_button_var = StringVar() #if booleanvar -> unchecked and always stays no!!!!
 Checkbutton(OneDrive_Upload_Frame, text='Yes', variable=OneDrive_button_var, command=Set_OneDrive_var).pack(side='right')
 
 
