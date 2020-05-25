@@ -3,8 +3,9 @@
 #TODO: Stop downloading on today's date without giving error
 #TODO: most important problem is when downloading a middle year - not the first one / we always get error
 #TODO: check program exit conditions, if bar is sill running, program cannot die
-#TODO: onedrive uploader does not work if yes is preset
+#TODO: if remote connection error, download pauses on last url - if user presses download again, it continues
 #TODO: download whole comic option
+#TODO: create json file to save starting point for each comic each year
 
 #TODO: Process 2 does not recognize path to create folder, probably because all vars/code so far was made by another core
 
@@ -22,7 +23,7 @@ from tkinter import simpledialog
 url = ''
 comic_title_var = ''
 year_var = ''
-OneDrive_var = ''
+OneDrive_var = 'No'
 first_publication_url = ''
 
 comic_title_list = []
@@ -104,7 +105,29 @@ def set_comic_title_var(event):
     year_selector['values'] = (year_list)
     print(year_selector['values'])
 
-def set_year_var(event):
+    # includes set_year_var code in case user lets previous year and does not set new one / maybe use if condition with newyear-oldyear vars
+    global year_var
+    global url
+    year_var = year_selector.get()
+    print (year_var)
+    if str(year_var) in str(first_publication_url[-10:-6]): # if year chosen by user is the first publication year
+        url = first_publication_url
+        print(url)
+    else:
+        url = first_publication_url
+        print(url)
+        while str(year_var) not in str(url[-10:-6]): # loop condition: year that user picked should be in URL
+            # Download the page.
+            print('Downloading page %s...' % url)
+            res = requests.get(url)
+            res.raise_for_status()
+            soup = bs4.BeautifulSoup(res.text, 'html.parser')
+            # Get the Next button's url.
+            nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
+            url = 'https://www.gocomics.com/' + nextLink.get('href')
+            print(url)
+
+def set_year_var(event): # code of this function is also included in comic_title one for the case user does not pick new year after selecting new title
     global comic_title_var
     global year_var
     global url
@@ -117,7 +140,20 @@ def set_year_var(event):
     # elif int(year_var) < int(first_publication_url[-10:-6]):
     #     print('Oops! Too early for {}' .format(comic_title_var))
     else:
-        url = 'https://www.gocomics.com/{}/{}/01/01' .format(comic_title_var, year_var) # starting url
+        url = first_publication_url
+        print(url)
+        while str(year_var) not in str(url[-10:-6]): # loop condition: year that user picked should be in URL
+            # Download the page.
+            print('Downloading page %s...' % url)
+            res = requests.get(url)
+            res.raise_for_status()
+            soup = bs4.BeautifulSoup(res.text, 'html.parser')
+            # Get the Next button's url.
+            nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
+            url = 'https://www.gocomics.com/' + nextLink.get('href')
+            print(url)
+        # url = 'https://www.gocomics.com/{}/{}/01/01' .format(comic_title_var, year_var) # starting url
+        # print(url)
 
 
 def Set_OneDrive_var():
@@ -167,7 +203,6 @@ def download_comic(): # the adventures of business cat 2018 does not download an
         print('Downloading page %s...' % url)
         res = requests.get(url)
         res.raise_for_status()
-    # 1967.04.17 requests.exceptions.HTTPError: 502 Server Error: Bad Gateway for url: https://assets.amuniversal.com/b7ac0120f892013014ff001dd8b71c47
         soup = bs4.BeautifulSoup(res.text, 'html.parser')
 
         # Find the URL of the comic image.
@@ -335,7 +370,9 @@ submit = Button(frame, text='Download', command=threading_dl_and_progress)
 
 OneDrive_Upload_Frame = Frame(frame)
 OneDrive_button_var = StringVar() #if booleanvar -> unchecked and always stays no!!!!
-Checkbutton(OneDrive_Upload_Frame, text='Yes', variable=OneDrive_button_var, command=Set_OneDrive_var).pack(side='right')
+c = Checkbutton(OneDrive_Upload_Frame, text='Yes', variable=OneDrive_button_var, command=Set_OneDrive_var)
+c.pack(side='right')
+c.deselect()
 
 
 #########################      grid     ###################################################
