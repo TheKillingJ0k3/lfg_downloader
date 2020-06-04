@@ -12,6 +12,23 @@ from time import sleep
 
 
 ###############################################################################################
+def getIndexPositions(listOfElements, element):
+    ''' Returns the indexes of all occurrences of give element in
+    the list- listOfElements '''
+    indexPosList = []
+    indexPos = 0
+    while True:
+        try:
+            # Search for item in list from indexPos to the end of list
+            indexPos = listOfElements.index(element, indexPos)
+            # Add the index position in list
+            indexPosList.append(indexPos)
+            indexPos += 1
+        except ValueError:
+            break
+ 
+    return indexPosList
+###############################################################################################
 def download_comic_with_Selenium():
     Dates = []
     # selenium method with headless browser
@@ -23,7 +40,6 @@ def download_comic_with_Selenium():
     sleep(10)
 
     # while True:
-
     # find element
     continue_banner = browser.find_element_by_xpath('/html/body/div[10]/div[1]/div/div/div[4]/button[2]') # /html/body/div[10]/div[1]/div/div/div[4]/button[2]
     continue_banner.click()
@@ -43,7 +59,22 @@ def download_comic_with_Selenium():
     select_year = Select(select_year_button)
     sleep(2)
     # select by visible text
-    year = '2015'
+    #####
+    res = requests.get(url) # check if we have problems with global var
+    res.raise_for_status()
+    soup = bs4.BeautifulSoup(res.text, 'html.parser')
+    # find button for first comic page
+    first_page_button = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa fa-backward sm"]')[0]
+    first_publication_url = 'https://www.gocomics.com/' + first_page_button.get('href')
+    print(first_publication_url)
+    year = first_publication_url[-10:-6]
+    print(year)
+    month = first_publication_url[-5:-3]
+    print(month)
+    # dict with months
+
+    #####
+    # year = '2015'
     select_year.select_by_visible_text(year)
     sleep(1)
     # for i in range(12)?
@@ -96,10 +127,30 @@ def download_comic_with_Selenium():
         print(x)
         month_dates_yayornay.append(x)
     print(month_dates_yayornay)
-    for x in month_dates_yayornay:
-        if x != 'None':
-            print(month_dates_yayornay.index(x)) # to x de leitourgei ws value tis listas
-            Dates.append(year + '-' + 'May-' + str(int(month_dates_yayornay.index(x))+1))
+    # for y in month_dates_yayornay:
+    #     if y != 'None':
+    #         print(month_dates_yayornay.index(y))
+    #         fockinglist.append(y)
+    #         Dates.append(year + '-' + 'May-' + str(int(month_dates_yayornay.index(y))+1))
+    #         print(Dates)
+
+# index only finds first occurence of value that's why I only get 0 and 3
+    indexPosList = []
+    indexPos = 0
+    while True:
+        try:
+            # Search for item in list from indexPos to the end of list
+            indexPos = month_dates_yayornay.index(None, indexPos)
+            # Add the index position in list
+            indexPosList.append(indexPos)
+            indexPos += 1
+        except ValueError:
+            break
+
+    print(indexPosList)
+    for i in range(len(indexPosList)):
+        if i not in indexPosList:
+            Dates.append(year + '-' + 'May-' + str(int(i)+1))
     print(Dates)
 
 
