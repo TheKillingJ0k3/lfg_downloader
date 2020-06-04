@@ -39,7 +39,10 @@ def download_comic_with_Selenium():
     Dates = []
     # selenium method with headless browser
     #(global first publication url)
-    url = 'https://www.gocomics.com/the-adventures-of-business-cat/2020/05/28'
+    url = 'https://www.gocomics.com/the-adventures-of-business-cat/2020/06/04'
+    current_year = url[-10:-6]
+    current_month = url[-5:-3]
+    print(current_month)
     # chrome_options = Options()
     # chrome_options.add_argument('--headless')
     browser = webdriver.Chrome() # options=chrome_options
@@ -59,10 +62,10 @@ def download_comic_with_Selenium():
     cookies_banner.click() 
     sleep(5)
 
-    actions = ActionChains(browser)
-    for _ in range(1):
-        actions.send_keys(Keys.SPACE).perform()
-        sleep(5)
+    # actions = ActionChains(browser)
+    # for _ in range(1):
+    #     actions.send_keys(Keys.SPACE).perform()
+    #     sleep(5)
 
     calendar_button = browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
     calendar_button.click() # ElementClickInterceptedException
@@ -91,9 +94,9 @@ def download_comic_with_Selenium():
         try:
             select_year.select_by_visible_text(year)
         except:
-            sleep(5)
+            select_year_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[2]/select')
+            select_year = Select(select_year_button)
             select_year.select_by_visible_text(year)
-            sleep(3)
         while int(month) <13:
             select_month_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[1]/select')
             select_month = Select(select_month_button)
@@ -101,53 +104,17 @@ def download_comic_with_Selenium():
             # select by visible text
             letter_month = months.get(month)
             print(letter_month)
-            select_month.select_by_visible_text(letter_month)
-            # try:
-            #     select_month.select_by_visible_text('January')
-            #     month = 'January'
-            # except:
-            #     try:
-            #         select_month.select_by_visible_text('February')
-            #         month = 'February'
-            #     except:
-            #         try:
-            #             select_month.select_by_visible_text('March')
-            #             month = 'March'
-            #         except:
-            #             try:
-            #                 select_month.select_by_visible_text('April')
-            #                 month = 'April'
-            #             except:
-            #                 try:
-            #                     select_month.select_by_visible_text('May')
-            #                     month = 'May'
-            #                 except:
-            #                     try:
-            #                         select_month.select_by_visible_text('June')
-            #                         month = 'June'
-            #                     except:
-            #                         try:
-            #                             select_month.select_by_visible_text('July')
-            #                             month = 'July'
-            #                         except:
-            #                             try:
-            #                                 select_month.select_by_visible_text('August')
-            #                                 month = 'August'
-            #                             except:
-            #                                 try:
-            #                                     select_month.select_by_visible_text('September')
-            #                                     month = 'September'
-            #                                 except:
-            #                                     try:
-            #                                         select_month.select_by_visible_text('October')
-            #                                         month = 'October'
-            #                                     except:
-            #                                         try:
-            #                                             select_month.select_by_visible_text('November')
-            #                                             month = 'November'
-            #                                         except:
-            #                                             select_month.select_by_visible_text('December')
-            #                                             month = 'December'
+            try:
+                select_month.select_by_visible_text(letter_month)
+            except:
+                select_month_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[1]/select')
+                select_month = Select(select_month_button)
+                sleep(2)
+                # select by visible text
+                letter_month = months.get(month)
+                print(letter_month)
+                sleep(2)
+                select_month.select_by_visible_text(letter_month)
                                                     
             sleep(5)
             print(month)
@@ -161,7 +128,7 @@ def download_comic_with_Selenium():
             month_dates_yayornay = []
 
             for i in dates_elements:
-                x = i.get_attribute('href') # #ui-datepicker-div > table > tbody > tr:nth-child(2) > td.undefined > a //////find_element_by_css_selector('a').
+                x = i.get_attribute('href') # #ui-datepicker-div > table > tbody > tr:nth-child(2) > td.undefined > a
                 print(x)
                 month_dates_yayornay.append(x)
             # for x in month_dates_yayornay:
@@ -203,57 +170,9 @@ def download_comic_with_Selenium():
 
         year = str(int(year) + 1)
         print(year)
-
-
-##############################################
-####### same
-#     select_month_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[1]/select')
-#     select_month = Select(select_month_button)
-#     sleep(2)
-#     # select by visible text
-#     select_month.select_by_visible_text('May')
-#     sleep(5)
-#     month = ''
-#     dates_elements = browser.find_elements_by_class_name('ui-state-default')
-#     # print(dates_elements)
-#     print(len(dates_elements))
-#     month_dates_yayornay = []
-
-#     for i in dates_elements:
-#         x = i.get_attribute('href') # #ui-datepicker-div > table > tbody > tr:nth-child(2) > td.undefined > a 
-#         print(x)
-#         month_dates_yayornay.append(x)
-#     print(month_dates_yayornay)
-#     # for y in month_dates_yayornay:
-#     #     if y != 'None':
-#     #         print(month_dates_yayornay.index(y))
-#     #         fockinglist.append(y)
-#     #         Dates.append(year + '-' + 'May-' + str(int(month_dates_yayornay.index(y))+1))
-#     #         print(Dates)
-
-# # index only finds first occurence of value that's why I only get 0 and 3
-#     indexPosList = []
-#     indexPos = 0
-#     while True:
-#         try:
-#             # Search for item in list from indexPos to the end of list
-#             indexPos = month_dates_yayornay.index(None, indexPos)
-#             # Add the index position in list
-#             indexPosList.append(indexPos)
-#             indexPos += 1
-#         except ValueError:
-#             break
-
-#     print(indexPosList)
-#     for i in range(len(indexPosList)):
-#         if i not in indexPosList:
-#             Dates.append(year + '-' + 'May-' + str(int(i)+1))
-#     print(Dates)
-
-
-
-
-
+        month = '01'
+        if year == current_year and month > current_month:
+            break
 
 ################################################################################################################################
 
