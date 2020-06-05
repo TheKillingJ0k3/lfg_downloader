@@ -35,6 +35,22 @@ def getIndexPositions(listOfElements, element):
  
     return indexPosList
 ###############################################################################################
+def first_vars():
+    ##### - first publication url global var so this is not needed inside program
+    url = 'https://www.gocomics.com/the-adventures-of-business-cat/2020/06/04'
+    res = requests.get(url)
+    res.raise_for_status()
+    soup = bs4.BeautifulSoup(res.text, 'html.parser')
+    # find button for first comic page
+    first_page_button = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa fa-backward sm"]')[0]
+    first_publication_url = 'https://www.gocomics.com/' + first_page_button.get('href')
+    print(first_publication_url)
+    year = first_publication_url[-10:-6]
+    print(year)
+    month = first_publication_url[-5:-3]
+    print(month)
+    return year, month
+###############################################################################################
 def download_comic_with_Selenium():
     Dates = []
     # selenium method with headless browser
@@ -47,23 +63,24 @@ def download_comic_with_Selenium():
     # chrome_options.add_argument('--headless')
     browser = webdriver.Chrome() # options=chrome_options
     browser.get(url)
-    sleep(10)
+    sleep(20)
 
     # close banners
+    cookies_banner = browser.find_element_by_xpath('//*[@id="cookieChoiceDismiss"]')
+    cookies_banner.click() 
+    sleep(5)
     try:
         continue_banner = browser.find_element_by_xpath('/html/body/div[10]/div[1]/div/div/div[4]/button[2]')
     except:
         sleep(10)
         continue_banner = browser.find_element_by_xpath('/html/body/div[10]/div[1]/div/div/div[4]/button[2]')
     continue_banner.click()
-    cookies_banner = browser.find_element_by_xpath('//*[@id="cookieChoiceDismiss"]')
-    cookies_banner.click() 
-    sleep(5)
-
-    # actions = ActionChains(browser)
-    # for _ in range(1):
-    #     actions.send_keys(Keys.SPACE).perform()
-    #     sleep(5)
+    
+    actions = ActionChains(browser)
+    for _ in range(1):
+        actions.send_keys(Keys.SPACE).perform()
+        sleep(5)
+    # while True:
     try:
         calendar_button = browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
     except:
@@ -75,19 +92,7 @@ def download_comic_with_Selenium():
     select_year_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[2]/select')
     select_year = Select(select_year_button)
     # sleep(2)
-
-    ##### - first publication url global var so this is not needed inside program
-    res = requests.get(url)
-    res.raise_for_status()
-    soup = bs4.BeautifulSoup(res.text, 'html.parser')
-    # find button for first comic page
-    first_page_button = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa fa-backward sm"]')[0]
-    first_publication_url = 'https://www.gocomics.com/' + first_page_button.get('href')
-    print(first_publication_url)
-    year = first_publication_url[-10:-6]
-    print(year)
-    month = first_publication_url[-5:-3]
-    print(month)
+    year, month = first_vars()
 
     #####
     while int(year) < 2021:
@@ -100,6 +105,7 @@ def download_comic_with_Selenium():
             select_year.select_by_visible_text(year)
 
         while int(month) <13: # try <12 and omit 142?
+
             select_month_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[1]/select')
             select_month = Select(select_month_button)
             sleep(2)
@@ -154,10 +160,12 @@ def download_comic_with_Selenium():
         # check if any of this is correct
         year = str(int(year) + 1)
         print(year)
+        if year == '2021':
+            break
         month = '01'
-        if int(year) == int(current_year):
-            if int(month) > int(current_month):
-                break
+        # if int(year) == int(current_year):
+        #     if int(month) > int(current_month):
+        #         break
             # else:
                 # month = '01'
 
