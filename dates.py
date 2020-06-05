@@ -119,10 +119,6 @@ def download_comic_with_Selenium():
             except:
                 select_month_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[1]/select')
                 select_month = Select(select_month_button)
-                sleep(2)
-                # select by visible text
-                # letter_month = months.get(month)
-                # print(letter_month)
                 # sleep(2)
                 select_month.select_by_visible_text(letter_month)
                                                     
@@ -167,14 +163,7 @@ def download_comic_with_Selenium():
 
         year = str(int(year) + 1) # important to proceed to next year
         print(year)
-        # if year == '2021':
-        #     break
         month = '01'
-        # if int(year) == int(current_year):
-        #     if int(month) > int(current_month):
-        #         break
-            # else:
-                # month = '01'
 
 ################################################################################################################################
 
