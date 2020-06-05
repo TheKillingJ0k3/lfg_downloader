@@ -49,14 +49,12 @@ def download_comic_with_Selenium():
     browser.get(url)
     sleep(10)
 
-    # while True:
-    # find element
+    # close banners
     try:
         continue_banner = browser.find_element_by_xpath('/html/body/div[10]/div[1]/div/div/div[4]/button[2]')
     except:
         sleep(10)
         continue_banner = browser.find_element_by_xpath('/html/body/div[10]/div[1]/div/div/div[4]/button[2]')
-
     continue_banner.click()
     cookies_banner = browser.find_element_by_xpath('//*[@id="cookieChoiceDismiss"]')
     cookies_banner.click() 
@@ -66,14 +64,18 @@ def download_comic_with_Selenium():
     # for _ in range(1):
     #     actions.send_keys(Keys.SPACE).perform()
     #     sleep(5)
-
-    calendar_button = browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
+    try:
+        calendar_button = browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
+    except:
+        sleep(3)
+        calendar_button = browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
     calendar_button.click() # ElementClickInterceptedException
     sleep(2)
+
     select_year_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[2]/select')
     select_year = Select(select_year_button)
-    sleep(2)
-    # select by visible text
+    # sleep(2)
+
     ##### - first publication url global var so this is not needed inside program
     res = requests.get(url)
     res.raise_for_status()
@@ -86,22 +88,22 @@ def download_comic_with_Selenium():
     print(year)
     month = first_publication_url[-5:-3]
     print(month)
-    # dict with months
 
     #####
     while int(year) < 2021:
-        sleep(5)
+        # sleep(5)
         try:
             select_year.select_by_visible_text(year)
         except:
             select_year_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[2]/select')
             select_year = Select(select_year_button)
             select_year.select_by_visible_text(year)
-        while int(month) <13:
+
+        while int(month) <13: # try <12 and omit 142?
             select_month_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[1]/select')
             select_month = Select(select_month_button)
             sleep(2)
-            # select by visible text
+            # convert month from url/loop to letters
             letter_month = months.get(month)
             print(letter_month)
             try:
@@ -111,68 +113,53 @@ def download_comic_with_Selenium():
                 select_month = Select(select_month_button)
                 sleep(2)
                 # select by visible text
-                letter_month = months.get(month)
-                print(letter_month)
-                sleep(2)
+                # letter_month = months.get(month)
+                # print(letter_month)
+                # sleep(2)
                 select_month.select_by_visible_text(letter_month)
                                                     
             sleep(5)
             print(month)
-            # if letter_month in back_months.keys():
-            #     month = back_months.get(letter_month)
-            #     print(month)
-            dates_elements = browser.find_elements_by_class_name('ui-state-default')
-
-            # print(dates_elements)
+            dates_elements = browser.find_elements_by_class_name('ui-state-default') # list with all dates elements in calendar
             print(len(dates_elements))
-            month_dates_yayornay = []
 
+            month_dates_yayornay = [] # list including none or (current) url members for each date of the month
             for i in dates_elements:
-                x = i.get_attribute('href') # #ui-datepicker-div > table > tbody > tr:nth-child(2) > td.undefined > a
+                x = i.get_attribute('href')
                 print(x)
                 month_dates_yayornay.append(x)
-            # for x in month_dates_yayornay:
-            #     if x:
-            #         Dates.append(year + '-' + month + '-' + str(int(month_dates_yayornay.index(x))+1))
-            # print(Dates)
 
-
-            # index only finds first occurence of value that's why I only get 0 and 3
-            indexPosList = []
-            indexPos = 0
-            while True:
-                try:
-                    # Search for item in list from indexPos to the end of list
-                    indexPos = month_dates_yayornay.index(None, indexPos)
-                    # Add the index position in list
-                    indexPosList.append(indexPos)
-                    indexPos += 1
-                except ValueError:
-                    break
-
+            indexPosList = getIndexPositions(month_dates_yayornay, None) # list of the position of each none element of the previous list
             print(indexPosList)
             for i in range(len(indexPosList)):
                 if i not in indexPosList:
-                    Dates.append(year + '-' + month + '-' + str(int(i)+1))
+                    new_date = str('0' + str(int(i)+1)) # indexPosList has len 30-31, I extract dates for which value is not none
+                    if len(str(new_date)) == 3:
+                        new_date = new_date[1:] # I added 0 for one digit dates and I subtract 0 for two-digit dates
+                    Dates.append(year + '-' + month + '-' + new_date)
             print(Dates)
 
-
+            # go to next month
             if int(month) <12:
                 month = str('0' + str((int(month) + 1)))
                 print(month)
-                if len(str(month)) == 3:
+                if len(str(month)) == 3: # I added 0 for one digit months and I subtract 0 for two-digit months
                     month = month[1:]
                     print(month)
                 letter_month = months.get(month)
                 print(letter_month)
-            elif int(month) == 12:
-                break
+            elif int(month) == 12: # what does this break???? this might be useless
+                break # check if this send us back to while <21 or reads next lines
 
+        # check if any of this is correct
         year = str(int(year) + 1)
         print(year)
         month = '01'
-        if year == current_year and month > current_month:
-            break
+        if int(year) == int(current_year):
+            if int(month) > int(current_month):
+                break
+            # else:
+                # month = '01'
 
 ################################################################################################################################
 
