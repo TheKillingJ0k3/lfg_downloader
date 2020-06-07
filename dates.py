@@ -10,9 +10,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select
 from time import sleep
 
+# alt shift f to see json as list
 ###############################################################################################
-# if it works, change dates to save multiple lists and then save to json
-#  
+  
 back_months = {'January': '01', 'February': '02', 'March':'03', 'April':'04',
             'May':'05', 'June':'06', 'July':'07', 'August':'08',
             'September':'09', 'October':'10', 'November':'10', 'December':'12'}
@@ -21,7 +21,6 @@ months = {'01': 'January', '02': 'February', '03': 'March', '04': 'April',
             '05': 'May', '06': 'June', '07': 'July', '08': 'August',
             '09': 'September', '10': 'October', '11': 'November', '12': 'December'}
 ###############################################################################################
-
 
 
 
@@ -43,22 +42,6 @@ def getIndexPositions(listOfElements, element):
  
     return indexPosList
 ###############################################################################################
-# def first_vars():
-#     ##### - first publication url global var so this is not needed inside program
-#     url = 'https://www.gocomics.com/the-adventures-of-business-cat/2020/06/04'
-#     res = requests.get(url)
-#     res.raise_for_status()
-#     soup = bs4.BeautifulSoup(res.text, 'html.parser')
-#     # find button for first comic page
-#     first_page_button = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa fa-backward sm"]')[0]
-#     first_publication_url = 'https://www.gocomics.com/' + first_page_button.get('href')
-#     print(first_publication_url)
-#     year = first_publication_url[-10:-6]
-#     print(year)
-#     month = first_publication_url[-5:-3]
-#     print(month)
-#     return year, month
-###############################################################################################
 def download_comic_with_Selenium():
     Dates = []
     url = first_publication_url
@@ -66,11 +49,6 @@ def download_comic_with_Selenium():
     global current_month
     global current_date
 
-    # current_year = url[-10:-6]
-    # current_month = url[-5:-3]
-    # # print(current_month)
-    # current_date = current_year + '/' + current_month + url[-3:]
-    # print(current_date)
     # selenium method with headless browser
     # chrome_options = Options()
     # chrome_options.add_argument('--headless')
@@ -154,7 +132,7 @@ def download_comic_with_Selenium():
                         new_date = str('0' + str(int(i)+1)) # indexPosList has len 30-31, I extract dates for which value is not none
                         if len(str(new_date)) == 3:
                             new_date = new_date[1:] # I added 0 for one digit dates and I subtract 0 for two-digit dates
-                        Dates.append(year + '-' + month + '-' + new_date) # if a calendar is full, indexPosList should be empty but month_dates_yayornay is normal
+                        Dates.append(year + '/' + month + '/' + new_date) # if a calendar is full, indexPosList should be empty but month_dates_yayornay is normal
             else: # if calendar is full, month_dates_yayornay is full of hrefs and indexPosList is empty - so we use month_dates_yayornay's index instead
                 for i in range(len(dates_elements)):
                     new_date = str('0' + str(int(i)+1))
@@ -162,6 +140,11 @@ def download_comic_with_Selenium():
                         new_date = new_date[1:]
                     Dates.append(year + '/' + month + '/' + new_date)
             print(Dates)
+            global title
+            global filename
+            list_of_all_dates[title] = [Dates]
+            with open(filename, 'w') as f_obj:
+                json.dump(list_of_all_dates, f_obj)
 
             last_date = Dates[-1] # .replace('-', '/')
             print(last_date)
@@ -186,58 +169,16 @@ def download_comic_with_Selenium():
         print(year)
         month = '01'
 
-    list_of_all_dates.append(Dates) # add to json
+    # list_of_all_dates.append(Dates) # add to json
+    # with open(filename, 'w') as f_obj:
+    #     json.dump(list_of_all_dates, f_obj)
+
+    # global title
+    # global filename
+    list_of_all_dates[title] = [Dates]
     with open(filename, 'w') as f_obj:
         json.dump(list_of_all_dates, f_obj)
-
 ################################################################################################################################
-
-# comic_title_var = 'The Adventures of Business Cat'
-
-
-# alt shift f to see json as list
-filename = '.\\Downloaded Comics\\comic_dates.json'
-try:
-    with open(filename) as f_obj:
-        list_of_all_dates = json.load(f_obj)
-except FileNotFoundError:
-    list_of_all_dates = []
-    # for comic in comictitles
-        # comic1dates = []
-        # comic2dates = [] ...
-    with open(filename, 'w') as f_obj:
-        json.dump(list_of_all_dates, f_obj)
-        print(list_of_all_dates)
-else:
-    print('json successfully loaded')
-#     print(list_of_all_dates)
-#      # for comic in comictitles
-#         # comic1dates = list_of_all_dates[0]
-#         # comic2dates = list_of_all_dates[1] ...
-
-
-# # # we need to create a list for each comic
-# comic1dates = []
-# comic2dates = []
-# comic3dates = []
-# list_of_all_dates = [comic1dates, comic2dates, comic3dates]
-
-#         list_of_all_dates.append(url)
-
-#         with open(filename, 'w') as f_obj: # overwrites file
-#             json.dump(list_of_all_dates, f_obj)
-
-#         # print(list_of_all_dates)
-        
-#     list_of_all_dates.append(chosen_comic_url) # add to json
-#     with open(filename, 'w') as f_obj:
-#         json.dump(list_of_all_dates, f_obj)
-#     print('ok')
-
-
-#######################################################################################################
-# download_comic_with_Selenium()
-
 
 # create list with all comic titles
 comic_title_list = []
@@ -249,10 +190,29 @@ soup = bs4.BeautifulSoup(res.text, 'html.parser')
 list_link = soup.select('div > h4')
 for i in list_link:
     comic_title_list.append(i.text)
+#########################################
+# json: dictionary 'list of all dates' with key=comic, value=dates 
 
-for i in comic_title_list:
+filename = '.\\Downloaded Comics\\comic_dates.json'
+try:
+    with open(filename) as f_obj:
+        list_of_all_dates = json.load(f_obj)
+except FileNotFoundError:
+    list_of_all_dates = {} # define dict
+    for title in comic_title_list:
+        list_of_all_dates[title] = [] # dict = {comic1:[], comic2:[]...}
+    with open(filename, 'w') as f_obj:
+            json.dump(list_of_all_dates, f_obj)
+            print(list_of_all_dates)
+else:
+    print('json successfully loaded')
+# my_dict["my_list"] = [3, 1, 4, 1, 5, 9, 2]
+# list_of_all_dates[comic1] = [Dates]
+
+#########################################
+for title in comic_title_list:
     # Get the comic current date url.
-    comic_current_date_url = soup.select('a[class="gc-blended-link gc-blended-link--primary col-12 col-sm-6 col-lg-4"]')[comic_title_list.index(i)] # index must be comic_title_list index
+    comic_current_date_url = soup.select('a[class="gc-blended-link gc-blended-link--primary col-12 col-sm-6 col-lg-4"]')[comic_title_list.index(title)] # index must be comic_title_list index
     chosen_comic_url = 'https://www.gocomics.com/' + comic_current_date_url.get('href') # list index out of range when choosing new title
     print(chosen_comic_url)
     # download current page of chosen comic
