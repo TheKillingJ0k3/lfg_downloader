@@ -2,6 +2,7 @@
 
 #TODO: if year/comic in json written, skip
 #TODO: update file only for new dates
+#TODO: refactoring to add to main file
 
 # Third party imports
 import requests, bs4, json
@@ -86,32 +87,11 @@ def download_comic_with_Selenium():
         calendar_button = browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
         calendar_button.click()
     except:
-        calendar_button = WebDriverWait(browser, 10).until(
+        calendar_button = WebDriverWait(browser, 15).until(
                 EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input"))
             )
         # browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
         calendar_button.click()
-    #     # Get the Next button's url.
-    #     nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
-    #     url = 'https://www.gocomics.com/' + nextLink.get('href')
-    #     browser = webdriver.Chrome() # options=chrome_options
-    #     browser.get(url)
-    #     sleep(30)
-    #     browser.implicitly_wait(10)
-        
-    #     actions = ActionChains(browser)
-    #     for _ in range(1):
-    #         actions.send_keys(Keys.SPACE).perform()
-    #         sleep(3)
-    #         try:
-    #             calendar_button = browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
-    #             calendar_button.click()
-    #         except:
-    #             calendar_button = WebDriverWait(browser, 10).until(
-    #             EC.element_to_be_clickable((By.XPATH, "/html/body/div[10]/div[1]/div/div/div[4]/button[2]"))
-    #         )
-    #             calendar_button.click()
-
 
     # next_button.click() # ElementClickInterceptedException /// /html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div[1]/div[1]/nav/div[2]/div/input
     sleep(5)
@@ -172,7 +152,7 @@ def download_comic_with_Selenium():
 
             month_dates_yayornay = [] # list including none or (current) url members for each date of the month
             for i in dates_elements:
-                x = i.get_attribute('href')
+                x = i.get_attribute('href') # element not attached //// 31/10/2005 - alley oop
                 month_dates_yayornay.append(x)
 
             indexPosList = getIndexPositions(month_dates_yayornay, None) # list of index number of each none element of the previous list
@@ -269,7 +249,7 @@ else:
 
 #########################################
 for title in comic_title_list:
-    if comic_title_list.index(title) > 4:
+    if comic_title_list.index(title) > 7:
         # Get the comic current date url.
         comic_current_date_url = soup1.select('a[class="gc-blended-link gc-blended-link--primary col-12 col-sm-6 col-lg-4"]')[comic_title_list.index(title)] # index must be comic_title_list index
         chosen_comic_url = 'https://www.gocomics.com/' + comic_current_date_url.get('href') # list index out of range when choosing new title
