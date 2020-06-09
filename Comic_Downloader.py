@@ -1,18 +1,21 @@
 #! python3
 
 #TODO: Stop downloading on today's date without giving error
-#TODO: most important problem is when downloading a middle year - not the first one / we always get error
-#TODO: check program exit conditions, if bar is sill running, program cannot die
+
+#TODO: check program exit conditions, if bar is sill running, program cannot die --> make all windows daemon?
 #TODO: if remote connection error, download pauses on last url - if user presses download again, it continues
 #TODO: download whole comic option
-#TODO: create json file to save starting point for each comic each year
+
+#TODO: if user just changes year, year loop starts counting from first year again
+#TODO: most important problem is when downloading a middle year - not the first one / we always get error
+#TODO: create another program that will parse through the entire website and save starting dates of each year of each comic title
 
 #TODO: Process 2 does not recognize path to create folder, probably because all vars/code so far was made by another core
 
 # Standard library imports
 import shutil, os, threading, subprocess, time
 # Third party imports
-import requests, bs4
+import requests, bs4, json
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
@@ -28,7 +31,7 @@ first_publication_url = ''
 
 comic_title_list = []
 
-
+filename = '.\\Downloaded Comics\\comic_dates_upto_askshagg.json' # change when file is ready
 comic_list_url = 'https://www.gocomics.com/comics/a-to-z'
 # Download the page.
 res = requests.get(comic_list_url)
@@ -98,7 +101,7 @@ def set_comic_title_var(event):
     global year_list
     print(first_publication_url[-10:-6])
     year_list = []
-    for i in range(int(first_publication_url[-10:-6]),2021):
+    for i in range(int(first_publication_url[-10:-6]), 2021):
         year_list.append(i)
     print(year_list)
     global year_selector
@@ -114,18 +117,42 @@ def set_comic_title_var(event):
         url = first_publication_url
         print(url)
     else:
-        url = first_publication_url
-        print(url)
-        while str(year_var) not in str(url[-10:-6]): # loop condition: year that user picked should be in URL
-            # Download the page.
-            print('Downloading page %s...' % url)
-            res = requests.get(url)
-            res.raise_for_status()
-            soup = bs4.BeautifulSoup(res.text, 'html.parser')
-            # Get the Next button's url.
-            nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
-            url = 'https://www.gocomics.com/' + nextLink.get('href')
-            print(url)
+        first_date_of_year_var = import_comic_dates(comic_title_var, year_var)[1]
+        url = 'https://www.gocomics.com/{}/{}' .format(comic_title_var.replace(' ', ''), first_date_of_year_var) # starting url
+        # url = first_publication_url
+        # print(url)
+        # while str(year_var) not in str(url[-10:-6]): # loop condition: year that user picked should be in URL
+        #     # Download the page.
+        #     print('Downloading page %s...' % url)
+        #     res = requests.get(url)
+        #     res.raise_for_status()
+        #     soup = bs4.BeautifulSoup(res.text, 'html.parser')
+        #     # Get the Next button's url.
+        #     nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
+        #     url = 'https://www.gocomics.com/' + nextLink.get('href')
+        #     print(url)
+
+def import_comic_dates(comic_title_var, year_var):
+    global filename
+    try:
+        with open(filename) as f_obj:
+            list_of_all_dates = json.load(f_obj)
+    except FileNotFoundError:
+        print('Add messagebox here')
+    else:
+        print('json successfully loaded')
+    # dates_of_comic_title_var = list_of_all_dates[title] --> to be used for full comic download
+    # global comic_title_var
+    # global year_var
+    # dates_of_year_var = list_of_all_dates[comic_title_var][year_var]
+    dates_of_year_var = list_of_all_dates[comic_title_var][year_var] # list with dates of selected year
+    print(dates_of_year_var)
+    number_of_comics_to_dl = len(dates_of_year_var)
+    print(number_of_comics_to_dl)
+    first_date_of_year_var = list_of_all_dates[comic_title_var][year_var][0]
+    return number_of_comics_to_dl, first_date_of_year_var
+
+
 
 def set_year_var(event): # code of this function is also included in comic_title one for the case user does not pick new year after selecting new title
     global comic_title_var
@@ -139,21 +166,23 @@ def set_year_var(event): # code of this function is also included in comic_title
         print(url)
     # elif int(year_var) < int(first_publication_url[-10:-6]):
     #     print('Oops! Too early for {}' .format(comic_title_var))
-    else:
-        url = first_publication_url
-        print(url)
-        while str(year_var) not in str(url[-10:-6]): # loop condition: year that user picked should be in URL
-            # Download the page.
-            print('Downloading page %s...' % url)
-            res = requests.get(url)
-            res.raise_for_status()
-            soup = bs4.BeautifulSoup(res.text, 'html.parser')
-            # Get the Next button's url.
-            nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
-            url = 'https://www.gocomics.com/' + nextLink.get('href')
-            print(url)
-        # url = 'https://www.gocomics.com/{}/{}/01/01' .format(comic_title_var, year_var) # starting url
+    else: # SOS SOS SOS SOS here I should use year
+        first_date_of_year_var = import_comic_dates(comic_title_var, year_var)[1]
+        url = 'https://www.gocomics.com/{}/{}' .format(comic_title_var.replace(' ', ''), first_date_of_year_var) # starting url
+        # url = first_publication_url
         # print(url)
+        # while str(year_var) not in str(url[-10:-6]): # loop condition: year that user picked should be in URL
+        #     # Download the page.
+        #     print('Downloading page %s...' % url)
+        #     res = requests.get(url)
+        #     res.raise_for_status()
+        #     soup = bs4.BeautifulSoup(res.text, 'html.parser')
+        #     # Get the Next button's url.
+        #     nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
+        #     url = 'https://www.gocomics.com/' + nextLink.get('href')
+        #     print(url)
+        # # url = 'https://www.gocomics.com/{}/{}/01/01' .format(comic_title_var, year_var) # starting url
+        # # print(url)
 
 
 def Set_OneDrive_var():
@@ -247,14 +276,21 @@ def OneDrive_upload():
 #############################################################################################
 
 
-lst = []
-combination_number = 200
-for x in range(0, combination_number):
-    lst.append(str(x+1))
-    # print(self.lst)
+# lst = []
+# combination_number = 200
+# for x in range(0, combination_number):
+#     lst.append(str(x+1))
+#     # print(self.lst)
 
-def start_progress():
+def start_progress(): #works - fix time
     # root = Tk()
+    lst = []
+    # combination_number = 200
+    number_of_comics_to_dl = import_comic_dates(comic_title_var, year_var)[0]
+    combination_number = int(float(number_of_comics_to_dl) * 3.2)
+    for x in range(0, combination_number):
+        lst.append(str(x+1))
+        # print(self.lst)
     s = ProgressWindow('Comic Downloader', lst)
     root.wait_window(s)
 
@@ -293,7 +329,9 @@ class ProgressWindow(simpledialog.Dialog):
         self.var2 = StringVar()
         self.num = IntVar()
         self.maximum = len(self.lst) #combination_number here
-        self.tmp_str = ' / ' + str(self.maximum)
+        # self.tmp_str = ' / ' + str(self.maximum)
+        self.tmp_str = ' / ' + '%'
+
         #
         # pady=(0,5) means margin 5 pixels to bottom and 0 to top
         ttk.Label(self, textvariable=self.var1).pack(anchor='w', padx=2)
@@ -352,7 +390,7 @@ frame.pack()
 first_line = Label(frame, text='Comic Downloader', bg='gray')
 first_line.pack()
 #second line
-ComicTitle = Label(frame, text='Comic Title', bg='pink')
+ComicTitle = Label(frame, text='GoComics Title', bg='pink')
 ComicYear = Label(frame, text='Year', bg='pink')
 OneDriveUpload = Label(frame, text='Upload to OneDrive', bg='pink')
 #third line
