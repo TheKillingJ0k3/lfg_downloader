@@ -21,7 +21,7 @@ from time import sleep
 
 # alt shift f to see json as list
 ###############################################################################################
-  
+browser = ''  
 back_months = {'January': '01', 'February': '02', 'March':'03', 'April':'04',
             'May':'05', 'June':'06', 'July':'07', 'August':'08',
             'September':'09', 'October':'10', 'November':'10', 'December':'12'}
@@ -30,9 +30,16 @@ months = {'01': 'January', '02': 'February', '03': 'March', '04': 'April',
             '05': 'May', '06': 'June', '07': 'July', '08': 'August',
             '09': 'September', '10': 'October', '11': 'November', '12': 'December'}
 ###############################################################################################
-
-
-
+def find_and_click_element(Xpath):
+    global browser
+    try:
+        Element_Name = browser.find_element_by_xpath(Xpath)
+        Element_Name.click()
+    except:
+        Element_Name = WebDriverWait(browser, 12).until(
+                EC.element_to_be_clickable((By.XPATH, Xpath))
+            )
+        Element_Name.click()
 ###############################################################################################
 def getIndexPositions(listOfElements, element):
     ''' Returns the indexes of all occurrences of give element in
@@ -57,61 +64,45 @@ def download_comic_with_Selenium():
     global current_year
     global current_month
     global current_date
+    global browser
 
     # selenium method with headless browser
     # chrome_options = Options()
     # chrome_options.add_argument('--headless')
     browser = webdriver.Chrome() # options=chrome_options
     browser.get(url)
-    sleep(30)
+    sleep(20)
     browser.implicitly_wait(10)
 
     # close banners
     cookies_banner = browser.find_element_by_xpath('//*[@id="cookieChoiceDismiss"]')
     cookies_banner.click() 
     sleep(3)
-    try:
-        continue_banner = browser.find_element_by_xpath('/html/body/div[10]/div[1]/div/div/div[4]/button[2]')
-        continue_banner.click()
-    except:
-        continue_banner = WebDriverWait(browser, 12).until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[10]/div[1]/div/div/div[4]/button[2]"))
-            )
-        continue_banner.click()
-    
+    find_and_click_element('/html/body/div[10]/div[1]/div/div/div[4]/button[2]') # Element = continue_banner
+    # scroll down once - sometimes it does not work
     actions = ActionChains(browser)
     for _ in range(1):
         actions.send_keys(Keys.SPACE).perform()
         sleep(3)
-    try:
-        calendar_button = browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
-        calendar_button.click()
-    except:
-        calendar_button = WebDriverWait(browser, 15).until(
-                EC.element_to_be_clickable((By.XPATH, "/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input"))
-            )
-        # browser.find_element_by_xpath('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input')
-        calendar_button.click()
-
-    # next_button.click() # ElementClickInterceptedException /// /html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div[1]/div[1]/nav/div[2]/div/input
+    find_and_click_element('/html/body/div[3]/div[2]/div[2]/div/div[2]/div[3]/div[1]/div/div[1]/nav/div[2]/div/input') # Element = calendar_button
     sleep(5)
-    try: # why is this also inside next loop?
-        # select_year_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[2]/select') # /html/body/div[8]/div/div/div/div/div/div[2]/select
-        select_year_button = WebDriverWait(browser, 10).until(
-                EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-datepicker-div"]/div/div/div[2]/select'))
-            )
-    except:
-        sleep(3)
+    try:
         select_year_button = browser.find_element_by_xpath('/html/body/div[8]/div/div/div/div/div/div[2]/select')
-    select_year = Select(select_year_button) # //*[@id="ui-datepicker-div"]/div/div/div[2]/select
+        select_year = Select(select_year_button) # //*[@id="ui-datepicker-div"]/div/div/div[2]/select
+    except:
+        select_year_button = WebDriverWait(browser, 10).until(
+            EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-datepicker-div"]/div/div/div[2]/select'))
+        )
+        select_year = Select(select_year_button)
+
     global first_publication_year
     global first_publication_month
-    year = first_publication_year
-    month = first_publication_month
+    year = first_publication_year # year value to start loop
+    month = first_publication_month # month value to start loop
 
     #####
     while int(year) < 2021:
-        Dates = []
+        Dates = [] # one Dates list for each year
         try:
             select_year.select_by_visible_text(year)
         except:
@@ -122,50 +113,56 @@ def download_comic_with_Selenium():
             select_year.select_by_visible_text(year)
 
 
-        while int(month) <13: # try <12 and omit 142? - this loop runs indefinitely from month = 1 until month = 12
-            
+        while int(month) <13: # try <12 and omit 142? - this loop runs indefinitely from month = 1 until month = 12            
             try:
                 select_month_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[1]/select')
                 select_month = Select(select_month_button)
                 letter_month = months.get(month) # convert month from url/loop to letters
                 print(letter_month)
                 select_month.select_by_visible_text(letter_month)
+                sleep(2)
             except:
-                select_month_button = WebDriverWait(browser, 10).until(
+                select_month_button = WebDriverWait(browser, 15).until(
                             EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-datepicker-div"]/div/div/div[1]/select'))
                         )
                 select_month = Select(select_month_button)
                 letter_month = months.get(month)
                 print(letter_month)
-                select_month.select_by_visible_text(letter_month)
-            #     select_month_button = browser.find_element_by_xpath('//*[@id="ui-datepicker-div"]/div/div/div[1]/select')
-                                                    
-            sleep(3)
+                select_month.select_by_visible_text(letter_month) # NoSuchElementException: Message: Could not locate element with visible text: July           
+                sleep(2)                                         
+            # this probably means comic ended there
             print(month)
             try:
                 dates_elements = browser.find_elements_by_class_name('ui-state-default') # list with all dates elements in calendar
             except:
-                dates_elements = WebDriverWait(browser, 10).until(
-                            EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-datepicker-div"]/div/div/div[1]/select'))
-                        )
+                dates_elements = WebDriverWait(browser, 15).until(
+                            EC.element_to_be_clickable((By.CLASS_NAME, 'ui-state-default')) # /html/body/div[8]/div/div/div/table/tbody/tr[1]/td[4]/a
+                        ) # /html/body/div[8]/div/div/div/table/tbody/tr[1]/td[6]/a
             print(len(dates_elements)) # every date is an object so we need to check on href
 
             month_dates_yayornay = [] # list including none or (current) url members for each date of the month
             for i in dates_elements:
-                x = i.get_attribute('href') # element not attached //// 31/10/2005 - alley oop
-                month_dates_yayornay.append(x)
+                try:
+                    x = i.get_attribute('href') # element not attached //// 31/10/2005 - alley oop
+                    month_dates_yayornay.append(x)
+                except: # not sure if this works for the correct i - most probably not
+                    x = WebDriverWait(browser, 20).until(
+                            EC.presence_of_element_located((By.CLASS_NAME, 'ui-state-default'))
+                        ).get_attribute('href')
+                    month_dates_yayornay.append(x)
 
             indexPosList = getIndexPositions(month_dates_yayornay, None) # list of index number of each none element of the previous list
             print(indexPosList)
-            if indexPosList:
+            if indexPosList: # if comic is published every day of the given month, indexPosList is empty because there are no None objects
                 for i in range(len(month_dates_yayornay)): # this loop uses the none-objects' indexes to add the non-none objects' dates to Dates
                     if i not in indexPosList:
                         new_date = str('0' + str(int(i)+1)) # indexPosList has len 30-31, I extract dates for which value is not none
                         if len(str(new_date)) == 3:
                             new_date = new_date[1:] # I added 0 for one digit dates and I subtract 0 for two-digit dates
                         Dates.append(year + '/' + month + '/' + new_date) # if a calendar is full, indexPosList should be empty but month_dates_yayornay is normal
-            else: # if calendar is full, month_dates_yayornay is full of hrefs and indexPosList is empty - so we use month_dates_yayornay's index instead
-                for i in range(len(dates_elements)):
+                # IDEA: if year + '/' + month + '/' + new_date == current_date: -> year = 2021 -> break
+            else: # if calendar is full, month_dates_yayornay is full of hrefs and indexPosList is empty
+                for i in range(len(dates_elements)): #  - so we use month_dates_yayornay's or dates_elements index instead
                     new_date = str('0' + str(int(i)+1))
                     if len(str(new_date)) == 3:
                         new_date = new_date[1:]
@@ -173,7 +170,7 @@ def download_comic_with_Selenium():
             # print(Dates)
             global title
             global filename
-            list_of_all_dates[title][year] = [Dates]
+            list_of_all_dates[title][year] = Dates # must be without []
             #         list_of_all_dates[title] = {} # dict = {comic1:{year1:[Dates]}, comic2:{year2:[Dates]}...}
             # dates must be cleared each time year changes
             # Nested dictionary having same keys 
@@ -182,26 +179,27 @@ def download_comic_with_Selenium():
             
             # # Prints value corresponding to key 'name' in Dict1 
             # print(Dict['Dict1']['name']) 
-            
-            # # Prints value corresponding to key 'age' in Dict2 
-            # print(Dict['Dict2']['age']) 
-
-            with open(filename, 'w') as f_obj:
+            with open(filename, 'w') as f_obj: # json gets updated every month
                 json.dump(list_of_all_dates, f_obj)
 # january 2005 IndexError: list index out of range ---- dates clears each year, so I'll have to check conditions
-            try:
-                last_date = Dates[-1] # .replace('-', '/')
+
+            try: # if month_dates_yayornay is full of none, aka no publication this month, Dates = [] 
+                last_date = Dates[-1] # if Dates[-1] gives indexerror, meaning list is empty, there's no point looking on file
+                print(last_date) # it's possible that last month is empty but exists in calendar, so I should give a better look here
+                print(current_date)
+                if last_date == current_date: # this is not enough, because some comics run past last date without publications
+                    year = '2021'
+                    break
+                if month == current_month and year == current_year:
+                    year = '2021'
+                    break
             except:
-                last_year_list_json = list_of_all_dates[title][year] # dict.get(key)
-                last_date = last_year_list_json[-1]
-            print(last_date)
-            print(current_date)
-            if last_date == current_date:
-                year = '2021'
-                break
+                pass
 
             # go to next month
-            if int(month) <12:
+            if int(month) <12: # 
+                # if year != current_year: # wrong
+                    # if month != current_month: # goes to july 2020 without this SOS SOS SOS SKIPS YEARS
                 month = str('0' + str((int(month) + 1)))
                 print(month)
                 if len(str(month)) == 3: # I added 0 for one digit months and I subtract 0 for two-digit months
@@ -249,7 +247,7 @@ else:
 
 #########################################
 for title in comic_title_list:
-    if comic_title_list.index(title) > 7:
+    if comic_title_list.index(title) > 14: # alley opp not full / andertoons until 2019 / 
         # Get the comic current date url.
         comic_current_date_url = soup1.select('a[class="gc-blended-link gc-blended-link--primary col-12 col-sm-6 col-lg-4"]')[comic_title_list.index(title)] # index must be comic_title_list index
         chosen_comic_url = 'https://www.gocomics.com/' + comic_current_date_url.get('href') # list index out of range when choosing new title
