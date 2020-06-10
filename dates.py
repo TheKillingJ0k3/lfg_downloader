@@ -90,7 +90,7 @@ def download_comic_with_Selenium():
         select_year_button = browser.find_element_by_xpath('/html/body/div[8]/div/div/div/div/div/div[2]/select')
         select_year = Select(select_year_button) # //*[@id="ui-datepicker-div"]/div/div/div[2]/select
     except:
-        select_year_button = WebDriverWait(browser, 10).until(
+        select_year_button = WebDriverWait(browser, 12).until(
             EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-datepicker-div"]/div/div/div[2]/select'))
         )
         select_year = Select(select_year_button)
@@ -106,7 +106,7 @@ def download_comic_with_Selenium():
         try:
             select_year.select_by_visible_text(year)
         except:
-            select_year_button = WebDriverWait(browser, 10).until(
+            select_year_button = WebDriverWait(browser, 12).until(
                             EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-datepicker-div"]/div/div/div[2]/select'))
                         )            
             select_year = Select(select_year_button)
@@ -247,7 +247,7 @@ else:
 
 #########################################
 for title in comic_title_list:
-    if comic_title_list.index(title) > 14: # alley opp not full / andertoons until 2019 / 
+    if comic_title_list.index(title) > 25: # alley opp not full / andertoons until 2019 / 
         # Get the comic current date url.
         comic_current_date_url = soup1.select('a[class="gc-blended-link gc-blended-link--primary col-12 col-sm-6 col-lg-4"]')[comic_title_list.index(title)] # index must be comic_title_list index
         chosen_comic_url = 'https://www.gocomics.com/' + comic_current_date_url.get('href') # list index out of range when choosing new title
