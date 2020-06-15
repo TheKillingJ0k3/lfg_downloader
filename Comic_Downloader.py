@@ -8,9 +8,9 @@
 
 #TODO: if user just changes year, year loop starts counting from first year again
 #TODO: most important problem is when downloading a middle year - not the first one / we always get error
-#TODO: create another program that will parse through the entire website and save starting dates of each year of each comic title
+#TODO: SOS SOS SOS SITE OMITS THE FROM TITLE AKA THE ACADEMIA WALTZ = ACADEMIAWALTZ IN URL
 
-#TODO: Process 2 does not recognize path to create folder, probably because all vars/code so far was made by another core
+#if I change comic and previously set year is not included in new list, download button downloads previous comics
 
 # Standard library imports
 import shutil, os, threading, subprocess, time
@@ -31,21 +31,8 @@ first_publication_url = ''
 
 comic_title_list = []
 
-filename = '.\\Downloaded Comics\\comic_dates_upto_askshagg.json' # change when file is ready
+jsonfilename = '.\\Downloaded Comics\\comic_dates_A_to_D.json' # change when file is ready
 comic_list_url = 'https://www.gocomics.com/comics/a-to-z'
-# Download the page.
-res = requests.get(comic_list_url)
-res.raise_for_status()
-soup = bs4.BeautifulSoup(res.text, 'html.parser')
-list_link = soup.select('div > h4')
-for i in list_link:
-    comic_title_list.append(i.text)
-
-
-year_list = []
-for i in range(1950,2021):
-    year_list.append(i)
-
 #####################################################
 
 
@@ -66,20 +53,30 @@ def function():
     print(year_var)
     print(OneDrive_var)
 
-def set_comic_title_var(event):
-    global comic_title_var
-    comic_title_var = comic_title_selector.get()
-    print (comic_title_var)
-    # url -> res -> parser -> with select I save element in list / var
-    global res # for 'https://www.gocomics.com/comics/a-to-z'
-    global soup # for 'https://www.gocomics.com/comics/a-to-z'
-
-    # Download the page.  If I do not use this, res & soup get overwritten by chosen url
-    global comic_list_url
-    res = requests.get(comic_list_url)
+def download_page(url):
+    res = requests.get(url)
     res.raise_for_status()
     soup = bs4.BeautifulSoup(res.text, 'html.parser')
+    return soup
 
+def update_year_list(first_publication_url):
+    """update year_list according to title selected"""
+    global year_list
+    print(first_publication_url[-10:-6])
+    year_list = []
+    for i in range(int(first_publication_url[-10:-6]), 2021): # it would be better to fix this so that it ends on last publication year
+        year_list.append(i)
+    print(year_list)
+    global year_selector
+    year_selector['values'] = (year_list)
+    print(year_selector['values'])
+
+def set_comic_title_var(event):
+    global comic_title_var
+    comic_title_var = comic_title_selector.get() # get comic title from GUI dropbox
+    print (comic_title_var)
+    global comic_list_url
+    soup = download_page(comic_list_url) # Download the comic list page.
     global comic_title_list
     print(comic_title_list.index(comic_title_var))
 
@@ -87,26 +84,13 @@ def set_comic_title_var(event):
     comic_current_date_url = soup.select('a[class="gc-blended-link gc-blended-link--primary col-12 col-sm-6 col-lg-4"]')[comic_title_list.index(comic_title_var)] # index must be comic_title_list index
     chosen_comic_url = 'https://www.gocomics.com/' + comic_current_date_url.get('href') # list index out of range when choosing new title
     print(chosen_comic_url)
-    # download current page of chosen comic
-    res = requests.get(chosen_comic_url) # check if we have problems with global var
-    res.raise_for_status()
-    soup = bs4.BeautifulSoup(res.text, 'html.parser')
+    soup = download_page(chosen_comic_url) # download current page of chosen comic
     # find button for first comic page
     first_page_button = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa fa-backward sm"]')[0]
     global first_publication_url
     first_publication_url = 'https://www.gocomics.com/' + first_page_button.get('href')
     print(first_publication_url)
-
-    # update year_list
-    global year_list
-    print(first_publication_url[-10:-6])
-    year_list = []
-    for i in range(int(first_publication_url[-10:-6]), 2021):
-        year_list.append(i)
-    print(year_list)
-    global year_selector
-    year_selector['values'] = (year_list)
-    print(year_selector['values'])
+    update_year_list(first_publication_url) # update year_list according to title selected
 
     # includes set_year_var code in case user lets previous year and does not set new one / maybe use if condition with newyear-oldyear vars
     global year_var
@@ -117,25 +101,18 @@ def set_comic_title_var(event):
         url = first_publication_url
         print(url)
     else:
-        first_date_of_year_var = import_comic_dates(comic_title_var, year_var)[1]
-        url = 'https://www.gocomics.com/{}/{}' .format(comic_title_var.replace(' ', ''), first_date_of_year_var) # starting url
-        # url = first_publication_url
-        # print(url)
-        # while str(year_var) not in str(url[-10:-6]): # loop condition: year that user picked should be in URL
-        #     # Download the page.
-        #     print('Downloading page %s...' % url)
-        #     res = requests.get(url)
-        #     res.raise_for_status()
-        #     soup = bs4.BeautifulSoup(res.text, 'html.parser')
-        #     # Get the Next button's url.
-        #     nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
-        #     url = 'https://www.gocomics.com/' + nextLink.get('href')
-        #     print(url)
+        try:
+            first_date_of_year_var = import_comic_dates(comic_title_var, year_var)[1]
+            url = 'https://www.gocomics.com/{}/{}' .format(comic_title_var.replace(' ', ''), first_date_of_year_var) # starting url is for previously set year
+        except KeyError:
+            print('Previous year not included in new year list')
+            messagebox.showinfo('Alert!', 'This comic was not published yet! \nPlease choose new year!')
+
 
 def import_comic_dates(comic_title_var, year_var):
-    global filename
+    global jsonfilename
     try:
-        with open(filename) as f_obj:
+        with open(jsonfilename) as f_obj:
             list_of_all_dates = json.load(f_obj)
     except FileNotFoundError:
         print('Add messagebox here')
@@ -153,7 +130,6 @@ def import_comic_dates(comic_title_var, year_var):
     return number_of_comics_to_dl, first_date_of_year_var
 
 
-
 def set_year_var(event): # code of this function is also included in comic_title one for the case user does not pick new year after selecting new title
     global comic_title_var
     global year_var
@@ -164,25 +140,16 @@ def set_year_var(event): # code of this function is also included in comic_title
     if str(year_var) in str(first_publication_url[-10:-6]): # if year chosen by user is the first publication year
         url = first_publication_url
         print(url)
-    # elif int(year_var) < int(first_publication_url[-10:-6]):
-    #     print('Oops! Too early for {}' .format(comic_title_var))
     else: # SOS SOS SOS SOS here I should use year
         first_date_of_year_var = import_comic_dates(comic_title_var, year_var)[1]
+        print(first_date_of_year_var)
         url = 'https://www.gocomics.com/{}/{}' .format(comic_title_var.replace(' ', ''), first_date_of_year_var) # starting url
-        # url = first_publication_url
-        # print(url)
-        # while str(year_var) not in str(url[-10:-6]): # loop condition: year that user picked should be in URL
-        #     # Download the page.
-        #     print('Downloading page %s...' % url)
-        #     res = requests.get(url)
-        #     res.raise_for_status()
-        #     soup = bs4.BeautifulSoup(res.text, 'html.parser')
-        #     # Get the Next button's url.
-        #     nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
-        #     url = 'https://www.gocomics.com/' + nextLink.get('href')
-        #     print(url)
-        # # url = 'https://www.gocomics.com/{}/{}/01/01' .format(comic_title_var, year_var) # starting url
-        # # print(url)
+        print(url)
+
+
+# Downloading page https://www.gocomics.com/TheAcademiaWaltz/2004/01/01...
+# 2004.01.01
+# Could not find comic image.
 
 
 def Set_OneDrive_var():
@@ -216,23 +183,19 @@ def threading_dl_and_progress(): # does not enter while loop
 
 
 def download_comic(): # the adventures of business cat 2018 does not download anything
-    global url
+    global url # comes from set date var and is first date we need
     global comic_title_var
     global year_var
 
-    # threadObj = threading.Thread(target=start_progress)
-    # threadObj.start()
-
     createFolder(os.path.join('Downloaded Comics', comic_title_var)) # multiprocessing does not recognize this var / cannot find path specified
-
-    while year_var in str(url[-10:-6]): # loop condition: year that user picked should be in URL
+    while year_var in str(url[-10:-6]): # loop condition: year that user picked should be in URL - URL gets updated for each comic strip
         os.makedirs(os.path.join('Downloaded Comics', comic_title_var, year_var), exist_ok=True) # createFolder
-
         # Download the page.
         print('Downloading page %s...' % url)
-        res = requests.get(url)
-        res.raise_for_status()
-        soup = bs4.BeautifulSoup(res.text, 'html.parser')
+        # res = requests.get(url)
+        # res.raise_for_status()
+        # soup = bs4.BeautifulSoup(res.text, 'html.parser')
+        soup = download_page(url)
 
         # Find the URL of the comic image.
         date = str(url[-10:])
@@ -248,7 +211,7 @@ def download_comic(): # the adventures of business cat 2018 does not download an
             res = requests.get(comicUrl)
             res.raise_for_status()  
 
-            # Save the image to ./Peanuts/Year.
+            # Save the image to appropriate folder.
             imageFile = open(os.path.join('Downloaded Comics', comic_title_var, year_var, os.path.basename(filename + '.jpg')), # comicUrl does not end with .jpg, so we add it manually
     'wb') # call os.path.basename() with comicUrl, and it will return just the last part of the URL /// join for Windows & Linux
             for chunk in res.iter_content(100000):
@@ -259,7 +222,7 @@ def download_comic(): # the adventures of business cat 2018 does not download an
         nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
         url = 'https://www.gocomics.com/' + nextLink.get('href')
 
-    print('Done.')
+    print('Done.') # loop ends with url being the first comic date of the next year than the one downloaded
     OneDrive_upload()
 
 
@@ -287,7 +250,7 @@ def start_progress(): #works - fix time
     lst = []
     # combination_number = 200
     number_of_comics_to_dl = import_comic_dates(comic_title_var, year_var)[0]
-    combination_number = int(float(number_of_comics_to_dl) * 3.2)
+    combination_number = int(number_of_comics_to_dl) * 4
     for x in range(0, combination_number):
         lst.append(str(x+1))
         # print(self.lst)
@@ -328,9 +291,9 @@ class ProgressWindow(simpledialog.Dialog):
         self.var1 = StringVar()
         self.var2 = StringVar()
         self.num = IntVar()
-        self.maximum = len(self.lst) #combination_number here
+        self.maximum = 100 # len(self.lst) #combination_number here
         # self.tmp_str = ' / ' + str(self.maximum)
-        self.tmp_str = ' / ' + '%'
+        self.tmp_str = '%'
 
         #
         # pady=(0,5) means margin 5 pixels to bottom and 0 to top
@@ -368,6 +331,15 @@ class ProgressWindow(simpledialog.Dialog):
         # self.master.focus_set()  # put focus back to the parent window
         self.destroy()  # destroy progress window
 
+###################### main code #########################################
+soup = download_page(comic_list_url)
+list_link = soup.select('div > h4') # obviously soup for comic_list_url
+for i in list_link:
+    comic_title_list.append(i.text)
+
+year_list = []
+for i in range(1950,2021):
+    year_list.append(i)
 
 ###################### main GUI - Button creation #########################################
 root = Tk()
