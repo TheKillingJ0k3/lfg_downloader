@@ -1,14 +1,8 @@
 #! python3
 
-#TODO: Stop downloading on today's date without giving error
-
 #TODO: check program exit conditions, if bar is sill running, program cannot die --> make all windows daemon?
 #TODO: if remote connection error, download pauses on last url - if user presses download again, it continues
-#TODO: download whole comic option
-
 #TODO: if user just changes year, year loop starts counting from first year again
-#TODO: most important problem is when downloading a middle year - not the first one / we always get error
-#TODO: SOS SOS SOS SITE OMITS THE FROM TITLE AKA THE ACADEMIA WALTZ = ACADEMIAWALTZ IN URL
 
 #if I change comic and previously set year is not included in new list, download button downloads previous comics
 
@@ -66,7 +60,6 @@ def update_year_list(first_publication_url):
     year_list = []
     for i in range(int(first_publication_url[-10:-6]), 2021): # it would be better to fix this so that it ends on last publication year
         year_list.append(i)
-    print(year_list)
     global year_selector
     year_selector['values'] = (year_list)
     print(year_selector['values'])
@@ -103,7 +96,8 @@ def set_comic_title_var(event):
     else:
         try:
             first_date_of_year_var = import_comic_dates(comic_title_var, year_var)[1]
-            url = 'https://www.gocomics.com/{}/{}' .format(comic_title_var.replace(' ', ''), first_date_of_year_var) # starting url is for previously set year
+            url = first_publication_url[:-10]+ first_date_of_year_var #we use first_publication_url and not title var because titles in url have many different formats
+            print(url)
         except KeyError:
             print('Previous year not included in new year list')
             messagebox.showinfo('Alert!', 'This comic was not published yet! \nPlease choose new year!')
@@ -118,12 +112,7 @@ def import_comic_dates(comic_title_var, year_var):
         print('Add messagebox here')
     else:
         print('json successfully loaded')
-    # dates_of_comic_title_var = list_of_all_dates[title] --> to be used for full comic download
-    # global comic_title_var
-    # global year_var
-    # dates_of_year_var = list_of_all_dates[comic_title_var][year_var]
     dates_of_year_var = list_of_all_dates[comic_title_var][year_var] # list with dates of selected year
-    print(dates_of_year_var)
     number_of_comics_to_dl = len(dates_of_year_var)
     print(number_of_comics_to_dl)
     first_date_of_year_var = list_of_all_dates[comic_title_var][year_var][0]
@@ -140,16 +129,11 @@ def set_year_var(event): # code of this function is also included in comic_title
     if str(year_var) in str(first_publication_url[-10:-6]): # if year chosen by user is the first publication year
         url = first_publication_url
         print(url)
-    else: # SOS SOS SOS SOS here I should use year
+    else:
         first_date_of_year_var = import_comic_dates(comic_title_var, year_var)[1]
         print(first_date_of_year_var)
-        url = 'https://www.gocomics.com/{}/{}' .format(comic_title_var.replace(' ', ''), first_date_of_year_var) # starting url
+        url = first_publication_url[:-10]+ first_date_of_year_var
         print(url)
-
-
-# Downloading page https://www.gocomics.com/TheAcademiaWaltz/2004/01/01...
-# 2004.01.01
-# Could not find comic image.
 
 
 def Set_OneDrive_var():
@@ -174,16 +158,16 @@ def Set_OneDrive_var():
 # threading acts as if using two cores but it does not - python processes a couple of lines of each function at intervals
 # multiprocessing uses 2 cores that do not share the same memory, so second process -download comic- does not work correctly
 
-def threading_dl_and_progress(): # does not enter while loop
-    threadObj1 = threading.Thread(target=download_comic) # does not enter while loop
+def threading_dl_and_progress():
+    threadObj1 = threading.Thread(target=download_comic)
     threadObj1.start()
     threadObj2 = threading.Thread(target=start_progress)
     time.sleep(5)
     threadObj2.start()
 
 
-def download_comic(): # the adventures of business cat 2018 does not download anything
-    global url # comes from set date var and is first date we need
+def download_comic():
+    global url # comes from set year var and is first date we need
     global comic_title_var
     global year_var
 
@@ -192,9 +176,6 @@ def download_comic(): # the adventures of business cat 2018 does not download an
         os.makedirs(os.path.join('Downloaded Comics', comic_title_var, year_var), exist_ok=True) # createFolder
         # Download the page.
         print('Downloading page %s...' % url)
-        # res = requests.get(url)
-        # res.raise_for_status()
-        # soup = bs4.BeautifulSoup(res.text, 'html.parser')
         soup = download_page(url)
 
         # Find the URL of the comic image.
@@ -210,7 +191,6 @@ def download_comic(): # the adventures of business cat 2018 does not download an
             print('Downloading image %s...' % (comicUrl))
             res = requests.get(comicUrl)
             res.raise_for_status()  
-
             # Save the image to appropriate folder.
             imageFile = open(os.path.join('Downloaded Comics', comic_title_var, year_var, os.path.basename(filename + '.jpg')), # comicUrl does not end with .jpg, so we add it manually
     'wb') # call os.path.basename() with comicUrl, and it will return just the last part of the URL /// join for Windows & Linux
@@ -219,7 +199,7 @@ def download_comic(): # the adventures of business cat 2018 does not download an
             imageFile.close()
 
         # Get the Next button's url.
-        nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0] # usual index error
+        nextLink = soup.select('a[class="fa btn btn-outline-secondary btn-circle fa-caret-right sm"]')[0]
         url = 'https://www.gocomics.com/' + nextLink.get('href')
 
     print('Done.') # loop ends with url being the first comic date of the next year than the one downloaded
@@ -291,9 +271,9 @@ class ProgressWindow(simpledialog.Dialog):
         self.var1 = StringVar()
         self.var2 = StringVar()
         self.num = IntVar()
-        self.maximum = 100 # len(self.lst) #combination_number here
-        # self.tmp_str = ' / ' + str(self.maximum)
-        self.tmp_str = '%'
+        self.maximum =  len(self.lst) #combination_number here
+        self.tmp_str = ' / ' + str(self.maximum)
+        self.tmp_str = '%' # maybe here I should have 2 vars - one maximum for counting and one to show
 
         #
         # pady=(0,5) means margin 5 pixels to bottom and 0 to top
