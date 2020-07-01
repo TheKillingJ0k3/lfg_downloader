@@ -25,7 +25,7 @@ first_publication_url = ''
 
 comic_title_list = []
 
-jsonfilename = '.\\Downloaded Comics\\comic_dates_A_to_D.json' # change when file is ready
+jsonfilename = '.\\Downloaded Comics\\comic_dates_all.json' # change when file is ready
 comic_list_url = 'https://www.gocomics.com/comics/a-to-z'
 #####################################################
 
@@ -147,14 +147,6 @@ def Set_OneDrive_var():
 
 ################################  MAIN FUNCTIONS  ###############################################
 
-# def progressbar_multiprocessing(): #opens 2 new main windows
-#     p1 = multiprocessing.Process(target=start_progress)
-#     p2 = multiprocessing.Process(target=download_comic)
-#     p1.start()
-#     p2.start()
-#     p1.join()
-#     p2.join()
-
 # threading acts as if using two cores but it does not - python processes a couple of lines of each function at intervals
 # multiprocessing uses 2 cores that do not share the same memory, so second process -download comic- does not work correctly
 
@@ -218,13 +210,6 @@ def OneDrive_upload():
         pass
 #############################################################################################
 
-
-# lst = []
-# combination_number = 200
-# for x in range(0, combination_number):
-#     lst.append(str(x+1))
-#     # print(self.lst)
-
 def start_progress(): #works - fix time
     # root = Tk()
     lst = []
@@ -259,10 +244,10 @@ class ProgressWindow(simpledialog.Dialog):
         # self.close gets fired when the window is destroyed
         self.protocol(u'WM_DELETE_WINDOW', self.close)
         # Set proper position over the parent window
-        # dx = (self.master.winfo_width() >> 1) - (self.length >> 1)
-        # dy = (self.master.winfo_height() >> 1) - 50
-        # self.geometry(u'+{x}+{y}'.format(x = self.master.winfo_rootx() + dx,
-        #                                  y = self.master.winfo_rooty() + dy))
+        dx = (root.winfo_width() >> 1) - (self.length >> 1)
+        dy = (root.winfo_height() >> 1) - 50
+        self.geometry(u'+{x}+{y}'.format(x = root.winfo_rootx() + dx,
+                                         y = root.winfo_rooty() + dy))
         self.geometry(u'+100+100')
         self.bind(u'<Escape>', self.close)  # cancel progress when <Escape> key is pressed
 
@@ -273,7 +258,7 @@ class ProgressWindow(simpledialog.Dialog):
         self.num = IntVar()
         self.maximum =  len(self.lst) #combination_number here
         self.tmp_str = ' / ' + str(self.maximum)
-        self.tmp_str = '%' # maybe here I should have 2 vars - one maximum for counting and one to show
+        # self.tmp_str = '%' # maybe here I should have 2 vars - one maximum for counting and one to show
 
         #
         # pady=(0,5) means margin 5 pixels to bottom and 0 to top
@@ -308,7 +293,7 @@ class ProgressWindow(simpledialog.Dialog):
             print('Ok: process finished successfully')
         else:
             print('Cancel: process is cancelled')
-        # self.master.focus_set()  # put focus back to the parent window
+        root.focus_set()  # put focus back to the parent window
         self.destroy()  # destroy progress window
 
 ###################### main code #########################################
