@@ -25,7 +25,7 @@ first_publication_url = ''
 
 comic_title_list = []
 
-jsonfilename = '.\\Downloaded Comics\\comic_dates_all.json' # change when file is ready
+jsonfilename = 'C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\comic_dates_all.json' #  \\Downloaded Comics\\comic_dates_all.json
 comic_list_url = 'https://www.gocomics.com/comics/a-to-z'
 #####################################################
 
@@ -62,7 +62,7 @@ def update_year_list(first_publication_url):
         year_list.append(i)
     global year_selector
     year_selector['values'] = (year_list)
-    print(year_selector['values'])
+    # print(year_selector['values'])
 
 def set_comic_title_var(event):
     global comic_title_var
@@ -71,7 +71,7 @@ def set_comic_title_var(event):
     global comic_list_url
     soup = download_page(comic_list_url) # Download the comic list page.
     global comic_title_list
-    print(comic_title_list.index(comic_title_var))
+    # print(comic_title_list.index(comic_title_var))
 
     # Get the comic current date url.
     comic_current_date_url = soup.select('a[class="gc-blended-link gc-blended-link--primary col-12 col-sm-6 col-lg-4"]')[comic_title_list.index(comic_title_var)] # index must be comic_title_list index
@@ -154,7 +154,7 @@ def threading_dl_and_progress():
     threadObj1 = threading.Thread(target=download_comic)
     threadObj1.start()
     threadObj2 = threading.Thread(target=start_progress)
-    time.sleep(5)
+    time.sleep(2)
     threadObj2.start()
 
 
@@ -162,6 +162,12 @@ def download_comic():
     global url # comes from set year var and is first date we need
     global comic_title_var
     global year_var
+
+    # top = Toplevel()
+    # top.title("About this application...")
+    # msg = Message(top, text='FUCK')
+    # msg.pack()
+    # top.destroy()
 
     createFolder(os.path.join('Downloaded Comics', comic_title_var)) # multiprocessing does not recognize this var / cannot find path specified
     while year_var in str(url[-10:-6]): # loop condition: year that user picked should be in URL - URL gets updated for each comic strip
@@ -212,22 +218,22 @@ def OneDrive_upload():
 
 def start_progress(): #works - fix time
     # root = Tk()
-    lst = []
+    # lst = []
     # combination_number = 200
     number_of_comics_to_dl = import_comic_dates(comic_title_var, year_var)[0]
-    combination_number = int(number_of_comics_to_dl) * 4
-    for x in range(0, combination_number):
-        lst.append(str(x+1))
+    # combination_number = int(number_of_comics_to_dl) * 4
+    # for x in range(0, combination_number):
+    #     lst.append(str(x+1))
         # print(self.lst)
-    s = ProgressWindow('Comic Downloader', lst)
+    s = ProgressWindow('Comic Downloader', number_of_comics_to_dl)
     root.wait_window(s)
 
 class ProgressWindow(simpledialog.Dialog):
-    def __init__(self, name, lst):
+    def __init__(self, name, number_of_comics_to_dl):
         ''' Init progress window '''
         Toplevel.__init__(self)
         self.name = name
-        self.lst = lst
+        self.number_of_comics_to_dl = number_of_comics_to_dl
         self.length = 400
         #
         self.create_window()
@@ -239,7 +245,8 @@ class ProgressWindow(simpledialog.Dialog):
         self.grab_set()  # make a modal window, so all events go to the ProgressWindow
         self.transient()  # show only one window in the task bar
         #
-        self.title(u'Downloading for {}'.format(self.name))
+        # self.title(u'Downloading for {}'.format(self.name))
+        self.title(u'Downloading' + comic_title_var + year_var)
         self.resizable(False, False)  # window is not resizable
         # self.close gets fired when the window is destroyed
         self.protocol(u'WM_DELETE_WINDOW', self.close)
@@ -247,24 +254,24 @@ class ProgressWindow(simpledialog.Dialog):
         dx = (root.winfo_width() >> 1) - (self.length >> 1)
         dy = (root.winfo_height() >> 1) - 50
         self.geometry(u'+{x}+{y}'.format(x = root.winfo_rootx() + dx,
-                                         y = root.winfo_rooty() + dy))
+                                        y = root.winfo_rooty() + dy))
         self.geometry(u'+100+100')
         self.bind(u'<Escape>', self.close)  # cancel progress when <Escape> key is pressed
 
     def create_widgets(self):
         ''' Widgets for progress window are created here '''
-        self.var1 = StringVar()
+        # self.var1 = StringVar()
         self.var2 = StringVar()
         self.num = IntVar()
-        self.maximum =  len(self.lst) #combination_number here
-        self.tmp_str = ' / ' + str(self.maximum)
-        # self.tmp_str = '%' # maybe here I should have 2 vars - one maximum for counting and one to show
+        # self.maximum =  len(self.lst) #combination_number here
+        # self.tmp_str = ' / ' + str(self.maximum)
+        self.tmp_str = '%' # maybe here I should have 2 vars - one maximum for counting and one to show
 
         #
         # pady=(0,5) means margin 5 pixels to bottom and 0 to top
-        ttk.Label(self, textvariable=self.var1).pack(anchor='w', padx=2)
-        self.progress = ttk.Progressbar(self, maximum=self.maximum, orient='horizontal',
-                                        length=self.length, variable=self.num, mode='determinate')
+        # ttk.Label(self, textvariable=self.var1).pack(anchor='w', padx=2)
+        self.progress = ttk.Progressbar(self, maximum=100, orient='horizontal',
+                                        length=self.length, variable=self.num, mode='determinate') # maximum=self.maximum
         self.progress.pack(padx=2, pady=2)
         ttk.Label(self, textvariable=self.var2).pack(side='left', padx=2)
         ttk.Button(self, text='Cancel', command=self.close).pack(anchor='e', padx=1, pady=(0, 1))
@@ -279,9 +286,9 @@ class ProgressWindow(simpledialog.Dialog):
         n += 1
         self.var2.set(str(n) + self.tmp_str)
         self.num.set(n)
-        if n < self.maximum:
-            self.after(500, self.next)  # call itself after some time
-        else:
+        if n < 100: # self.maximum
+            self.after(int(2600* int(self.number_of_comics_to_dl) / 100), self.next)  # call itself after some time (int(100*500/self.number_of_comics_to_dl)
+        else: # to dl 100 files, we do next every 3.2secs -> to dl dl files, we do next every 3.2*dl/100
             self.close()  # close window
 
     # def do_something_with_file(self, number, name): #edw vazw "test x generated"
@@ -289,7 +296,7 @@ class ProgressWindow(simpledialog.Dialog):
 
     def close(self, event=None):
         ''' Close progress window '''
-        if self.progress['value'] == self.maximum:
+        if self.progress['value'] == 100: # self.maximum
             print('Ok: process finished successfully')
         else:
             print('Cancel: process is cancelled')
@@ -315,7 +322,7 @@ root.geometry('500x350')
 # root.state('zoomed')
 # root.option_add('*tear0ff', False) #opens fullscreen
 
-background_image = PhotoImage(file='Documents\\Python\\Comic downloader\\crowd-img.png')
+background_image = PhotoImage(file='C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\crowd-img.png') #  Documents\\Python\\Comic downloader\\crowd-img.png
 background_label = Label(root, image=background_image)
 background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
