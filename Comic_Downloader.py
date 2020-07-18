@@ -1,6 +1,6 @@
 #! python3
 
-#TODO: check program exit conditions, if bar is sill running, program cannot die --> make all windows daemon?
+#TODO: check program exit conditions, if bar is sill running, program cannot die --> modify close function to also terminate dl
 #TODO: if remote connection error, download pauses on last url - if user presses download again, it continues
 #TODO: if user just changes year, year loop starts counting from first year again
 
@@ -64,7 +64,24 @@ def update_year_list(first_publication_url):
     year_selector['values'] = (year_list)
     # print(year_selector['values'])
 
-def set_comic_title_var(event):
+def threading_set_comic_title_var_and_message(event):
+    """Runs set_comic_title_var and fetching_data_message similtaneously
+    """
+    threadObj1 = threading.Thread(target=set_comic_title_var)
+    threadObj1.start()
+    threadObj2 = threading.Thread(target=fetching_data_message)
+    threadObj2.start()
+
+
+def fetching_data_message():
+    top = Toplevel()
+    top.title("Comic Downloader")
+    msg = Message(top, text='Fetching Comic Data...')
+    msg.pack()
+    time.sleep(2)
+    top.destroy()
+
+def set_comic_title_var():
     global comic_title_var
     comic_title_var = comic_title_selector.get() # get comic title from GUI dropbox
     print (comic_title_var)
@@ -217,14 +234,7 @@ def OneDrive_upload():
 #############################################################################################
 
 def start_progress(): #works - fix time
-    # root = Tk()
-    # lst = []
-    # combination_number = 200
     number_of_comics_to_dl = import_comic_dates(comic_title_var, year_var)[0]
-    # combination_number = int(number_of_comics_to_dl) * 4
-    # for x in range(0, combination_number):
-    #     lst.append(str(x+1))
-        # print(self.lst)
     s = ProgressWindow('Comic Downloader', number_of_comics_to_dl)
     root.wait_window(s)
 
@@ -245,8 +255,7 @@ class ProgressWindow(simpledialog.Dialog):
         self.grab_set()  # make a modal window, so all events go to the ProgressWindow
         self.transient()  # show only one window in the task bar
         #
-        # self.title(u'Downloading for {}'.format(self.name))
-        self.title(u'Downloading' + comic_title_var + year_var)
+        self.title(u'Downloading:' + comic_title_var + ' ' + year_var)
         self.resizable(False, False)  # window is not resizable
         # self.close gets fired when the window is destroyed
         self.protocol(u'WM_DELETE_WINDOW', self.close)
@@ -287,7 +296,7 @@ class ProgressWindow(simpledialog.Dialog):
         self.var2.set(str(n) + self.tmp_str)
         self.num.set(n)
         if n < 100: # self.maximum
-            self.after(int(2600* int(self.number_of_comics_to_dl) / 100), self.next)  # call itself after some time (int(100*500/self.number_of_comics_to_dl)
+            self.after(int(3200* int(self.number_of_comics_to_dl) / 100), self.next)  # call itself after some time (int(100*500/self.number_of_comics_to_dl)
         else: # to dl 100 files, we do next every 3.2secs -> to dl dl files, we do next every 3.2*dl/100
             self.close()  # close window
 
@@ -341,7 +350,7 @@ OneDriveUpload = Label(frame, text='Upload to OneDrive', bg='pink')
 # comic_title_var = StringVar() # TypeError: 'StringVar' object is not callable
 comic_title_selector = ttk.Combobox(frame, width='30', textvariable=comic_title_var)
 comic_title_selector['values'] = (comic_title_list)
-comic_title_selector.bind('<<ComboboxSelected>>', set_comic_title_var)
+comic_title_selector.bind('<<ComboboxSelected>>', threading_set_comic_title_var_and_message)
 
 year_selector = ttk.Combobox(frame, width='10')
 year_selector['values'] = (year_list)
