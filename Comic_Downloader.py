@@ -1,6 +1,5 @@
 #! python3
 
-#TODO: check program exit conditions, if bar is sill running, program cannot die --> modify close function to also terminate dl
 #TODO: if remote connection error, download pauses on last url - if user presses download again, it continues
 #TODO: if user just changes year, year loop starts counting from first year again
 
@@ -72,14 +71,24 @@ def threading_set_comic_title_var_and_message(event):
     threadObj2 = threading.Thread(target=fetching_data_message)
     threadObj2.start()
 
-
+####################################################################
+# wrap up inside class
 def fetching_data_message():
     top = Toplevel()
     top.title("Comic Downloader")
     msg = Message(top, text='Fetching Comic Data...')
     msg.pack()
+    time.sleep(3)
+    top.destroy()
+    
+def last_comic_dled_message(text_to_show):
+    top = Toplevel()
+    top.title("Comic Downloader")
+    msg = Message(top, text=text_to_show)
+    msg.pack()
     time.sleep(2)
     top.destroy()
+####################################################################
 
 def set_comic_title_var():
     global comic_title_var
@@ -179,15 +188,15 @@ def download_comic():
     global url # comes from set year var and is first date we need
     global comic_title_var
     global year_var
-
-    # top = Toplevel()
-    # top.title("About this application...")
-    # msg = Message(top, text='FUCK')
-    # msg.pack()
-    # top.destroy()
+    global download_switch
+    download_switch = 'ON'
 
     createFolder(os.path.join('Downloaded Comics', comic_title_var)) # multiprocessing does not recognize this var / cannot find path specified
     while year_var in str(url[-10:-6]): # loop condition: year that user picked should be in URL - URL gets updated for each comic strip
+        if download_switch == 'OFF':
+            last_comic_dled_text = 'Last Comic Downloaded was: ' + filename
+            last_comic_dled_message(last_comic_dled_text)
+            break
         os.makedirs(os.path.join('Downloaded Comics', comic_title_var, year_var), exist_ok=True) # createFolder
         # Download the page.
         print('Downloading page %s...' % url)
@@ -309,6 +318,8 @@ class ProgressWindow(simpledialog.Dialog):
             print('Ok: process finished successfully')
         else:
             print('Cancel: process is cancelled')
+        global download_switch
+        download_switch = 'OFF'
         root.focus_set()  # put focus back to the parent window
         self.destroy()  # destroy progress window
 
