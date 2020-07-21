@@ -76,6 +76,7 @@ def threading_set_comic_title_var_and_message(event):
 def fetching_data_message():
     top = Toplevel()
     top.title("Comic Downloader")
+    top.iconbitmap('C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\snoopy_.ico')
     msg = Message(top, text='Fetching Comic Data...')
     msg.pack()
     time.sleep(3)
@@ -84,6 +85,7 @@ def fetching_data_message():
 def last_comic_dled_message(text_to_show):
     top = Toplevel()
     top.title("Comic Downloader")
+    top.iconbitmap('C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\snoopy_.ico')
     msg = Message(top, text=text_to_show)
     msg.pack()
     time.sleep(2)
@@ -265,6 +267,7 @@ class ProgressWindow(simpledialog.Dialog):
         self.transient()  # show only one window in the task bar
         #
         self.title(u'Downloading:' + comic_title_var + ' ' + year_var)
+        self.iconbitmap('C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\snoopy_.ico')
         self.resizable(False, False)  # window is not resizable
         # self.close gets fired when the window is destroyed
         self.protocol(u'WM_DELETE_WINDOW', self.close)
@@ -335,12 +338,27 @@ for i in range(1950,2021):
 
 ###################### main GUI - Button creation #########################################
 root = Tk()
+# root.iconphoto(PhotoImage(True, file='C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\Downloaded Comics\\snoopy_PNG.png'))
+# root.call('wm', 'iconphoto', root._w, PhotoImage(file='C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\snoopy_.gif'))
+root.iconbitmap('C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\snoopy_.ico')
 # if __name__ == '__main__':
-    
 root.title('Comic Downloader')
-root.geometry('500x350')
+# root.geometry('500x350')
 # root.state('zoomed')
 # root.option_add('*tear0ff', False) #opens fullscreen
+
+# Gets the requested values of the height and widht.
+windowWidth = root.winfo_reqwidth()
+windowHeight = root.winfo_reqheight()
+# print("Width",windowWidth,"Height",windowHeight)
+
+# Gets both half the screen width/height and window width/height
+positionRight = int(root.winfo_screenwidth()/2 - windowWidth/2)
+positionDown = int(root.winfo_screenheight()/3 - windowHeight/2)
+
+# Positions the window in the center of the page.
+root.geometry("500x350+{}+{}".format(positionRight, positionDown))
+
 
 background_image = PhotoImage(file='C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\crowd-img.png') #  Documents\\Python\\Comic downloader\\crowd-img.png
 background_label = Label(root, image=background_image)
