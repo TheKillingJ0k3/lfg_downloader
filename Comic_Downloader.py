@@ -343,21 +343,21 @@ root = Tk()
 root.iconbitmap('C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\snoopy_.ico')
 # if __name__ == '__main__':
 root.title('Comic Downloader')
-# root.geometry('500x350')
+root.geometry('500x350')
 # root.state('zoomed')
 # root.option_add('*tear0ff', False) #opens fullscreen
 
 # Gets the requested values of the height and widht.
-windowWidth = root.winfo_reqwidth()
-windowHeight = root.winfo_reqheight()
+# windowWidth = root.winfo_reqwidth()
+# windowHeight = root.winfo_reqheight()
 # print("Width",windowWidth,"Height",windowHeight)
 
 # Gets both half the screen width/height and window width/height
-positionRight = int(root.winfo_screenwidth()/2 - windowWidth/2)
-positionDown = int(root.winfo_screenheight()/3 - windowHeight/2)
+# positionRight = int(root.winfo_screenwidth()/2 - 500/2)# windowWidth
+# positionDown = int(root.winfo_screenheight()/3 - 350/2)# windowHeight
 
-# Positions the window in the center of the page.
-root.geometry("500x350+{}+{}".format(positionRight, positionDown))
+# # Positions the window in the center of the page.
+# root.geometry("500x350+{}+{}".format(positionRight, positionDown))
 
 
 background_image = PhotoImage(file='C:\\Users\\kj\\Documents\\Python Projects\\Comic downloader\\crowd-img.png') #  Documents\\Python\\Comic downloader\\crowd-img.png
